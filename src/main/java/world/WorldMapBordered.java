@@ -1,5 +1,7 @@
 package world;
 
+import java.util.Set;
+
 public class WorldMapBordered extends AbstractWorldMap{
     public WorldMapBordered(int width, int height, double jungleRatio){
         super(width, height, jungleRatio);
@@ -9,16 +11,18 @@ public class WorldMapBordered extends AbstractWorldMap{
         return location.follows(corners[0]) && location.precedes(corners[1]);
     }
     public void moveForward(Animal animal){
-        Vector2d newPos = animal.getPosition().add(animal.directionToVector());
+        Vector2d oldPos = animal.getPosition();
+        Vector2d newPos = oldPos.add(animal.directionToVector());
         if(this.canMoveTo(newPos)){
-            animal.positionChanged(animal, animal.getPosition(), newPos);
+            animal.positionChanged(animal, oldPos, newPos);
             animal.setPosition(newPos);
         }
     }
     public void moveBackward(Animal animal){
-        Vector2d newPos = animal.getPosition().subtract(animal.directionToVector());
+        Vector2d oldPos = animal.getPosition();
+        Vector2d newPos = oldPos.subtract(animal.directionToVector());
         if(this.canMoveTo(newPos)){
-            animal.positionChanged(animal, animal.getPosition(), newPos);
+            animal.positionChanged(animal, oldPos, newPos);
             animal.setPosition(newPos);
         }
     }

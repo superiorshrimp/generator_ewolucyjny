@@ -59,7 +59,7 @@ public class App extends Application{
         }
         for(int i = 0; i<this.spawnAnimals; i++){
             Animal toAdd = new Animal(new Vector2d(getRandomNumber(0, this.width), getRandomNumber(0, this.height)), this.startEnergy);
-            toAdd.addObserver(bMap);
+            toAdd.addObserver(lMap);
             this.lMap.addAnimal(toAdd);
             this.lMap.animalsAlive = this.spawnAnimals;
         }

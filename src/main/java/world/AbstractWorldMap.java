@@ -45,10 +45,12 @@ public class AbstractWorldMap implements IPositionChangeObserver{
         }
     }
     public void removeAnimal(Animal animal){
-        this.animalList.remove(animal);
-        if(this.animals.get(animal.getPosition()).removeAnimal(animal)){ //cos nie gra
+        this.animals.get(animal.getPosition()).removeAnimal(animal);
+        if(this.animals.get(animal.getPosition()).animals.size() == 0){ //cos nie gra
             this.animals.remove(animal.getPosition());
         }
+        this.animalList.remove(animal);
+
     }
     public void addGrass(Vector2d location, int plantEnergy){
         this.grasses.put(location, new Grass(location, plantEnergy));
@@ -63,7 +65,7 @@ public class AbstractWorldMap implements IPositionChangeObserver{
         this.jungle.remove(grass.getPosition());
     }
     public boolean isOccupied(Vector2d location){
-        return animals.containsKey(location) || grasses.containsKey(location);
+        return animals.containsKey(location) || grasses.containsKey(location) || jungle.containsKey(location);
     }
     public Object objectAt(Vector2d location){
         if(animals.containsKey(location)){

@@ -32,6 +32,7 @@ public class SimulationEngine implements Runnable{
     }
     public void run(){
         for(int day = 0; day < this.days; day++) {
+            System.out.println(day);
             removeDeadAnimals();
             moveAnimals();
             eat();
@@ -50,16 +51,6 @@ public class SimulationEngine implements Runnable{
         for (Animal animal : this.map.animalList) {
             if (animal.getEnergy() - this.moveEnergy < 0) {
                 toRemove.add(animal);
-            } else {
-                animal.decreaseEnergy(this.moveEnergy);
-                int rotate = getRandomNumber(0, 8);
-                if (rotate == 0) {
-                    this.map.moveForward(animal);
-                } else if (rotate == 4) {
-                    this.map.moveBackward(animal);
-                } else {
-                    animal.rotate(rotate);
-                }
             }
         }
         this.map.animalsAlive -= toRemove.size();
@@ -70,13 +61,16 @@ public class SimulationEngine implements Runnable{
     }
     public void moveAnimals(){
         for(Animal animal : this.map.animalList){
-            int randRotation = animal.getGenotype().get(getRandomNumber(0,31));
-            animal.rotate(randRotation);
+            int randRotation = animal.getGenotype().get(getRandomNumber(0,32));
+            Vector2d oldPos = animal.getPosition();
             if(randRotation == 0){
                 this.map.moveForward(animal);
             }
             else if(randRotation == 4){
                 this.map.moveBackward(animal);
+            }
+            else{
+                animal.rotate(randRotation);
             }
         }
     }
@@ -123,12 +117,14 @@ public class SimulationEngine implements Runnable{
                 ArrayList<Animal> parents = this.map.animals.get(location).get2Strongest();
                 Animal a0 = parents.get(0);
                 Animal a1 = parents.get(1);
-                if(a1.getEnergy() >= this.startEnergy/2){
+                if(a0.getEnergy() >= this.startEnergy/2 && a1.getEnergy() >= this.startEnergy/2){
                     Animal baby = new Animal(location, (a0.getEnergy() + a1.getEnergy())/4, a0.getGenotype(), a1.getGenotype(), a0.getEnergy(), a1.getEnergy());
                     a0.decreaseEnergy(a0.getEnergy()/4); //not too clean, but works
                     a1.decreaseEnergy(a1.getEnergy()/4);
                     this.map.addAnimal(baby);
                     this.map.animalsAlive += 1;
+                    this.map.animals.get(location).updateStrongest();
+                    baby.addObserver(this.map);
                 }
             }
         }

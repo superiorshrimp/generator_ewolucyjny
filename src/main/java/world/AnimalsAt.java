@@ -42,13 +42,15 @@ public class AnimalsAt{
         int lookingFor = 0;
         Animal rem = this.strongest; //must be filled
         for(Animal animal : animals){
-            if(animal.getEnergy() == getMaxEnergy() && animal != this.strongest){
-                ret.add(animal);
-                return ret;
-            }
-            else if(animal.getEnergy() < getMaxEnergy() && animal.getEnergy() > lookingFor){
-                rem = animal;
-                lookingFor = animal.getEnergy();
+            if(animal != this.strongest){
+                if(animal.getEnergy() == getMaxEnergy()){
+                    ret.add(animal);
+                    return ret;
+                }
+                else if(animal.getEnergy() > lookingFor){
+                    rem = animal;
+                    lookingFor = animal.getEnergy();
+                }
             }
         }
         ret.add(rem);
@@ -63,5 +65,14 @@ public class AnimalsAt{
             }
         }
         return ret;
+    }
+    public void updateStrongest(){
+        int max = this.strongest.getEnergy();
+        for(Animal animal : this.animals){
+            if(animal.getEnergy()>max){
+                this.strongest = animal;
+                max = animal.getEnergy();
+            }
+        }
     }
 }

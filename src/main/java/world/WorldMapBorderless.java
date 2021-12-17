@@ -6,12 +6,12 @@ public class WorldMapBorderless extends AbstractWorldMap{
     }
     public void moveForward(Animal animal){
         Vector2d newPos = new Vector2d((animal.getPosition().x+animal.directionToVector().x)%(this.width+1), (animal.getPosition().y+animal.directionToVector().y)%(this.height+1));
-        animal.positionChanged(animal, animal.getPosition(), newPos);
+        this.positionChanged(animal, animal.getPosition(), newPos);
         animal.setPosition(newPos);
     }
     public void moveBackward(Animal animal){
         Vector2d newPos = new Vector2d((animal.getPosition().x-animal.directionToVector().x)%(this.width+1), (animal.getPosition().y-animal.directionToVector().y)%(this.height+1));
-        animal.positionChanged(animal, animal.getPosition(), newPos);
+        this.positionChanged(animal, animal.getPosition(), newPos);
         animal.setPosition(newPos);
     }
 }

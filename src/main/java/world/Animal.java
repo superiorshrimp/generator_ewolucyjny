@@ -14,14 +14,14 @@ public class Animal implements IPositionChangeObserver{
         this.observers = new ArrayList<>();
         this.energy = energy;
         this.genotype = createRandomGenotype();
-        this.facing = getRandomNumber(0,7);
+        this.facing = getRandomNumber(0,8);
     }
     public Animal(Vector2d location, int energy, ArrayList<Integer> genotype1, ArrayList<Integer> genotype2, int energy1, int energy2){
         this.position = location;
         this.observers = new ArrayList<>();
         this.energy = energy;
         this.genotype = createGenotype(genotype1, genotype2, energy1, energy2);
-        this.facing = getRandomNumber(0,7);
+        this.facing = getRandomNumber(0,8);
     }
     public void increaseEnergy(int plantEnergy){
         this.energy += plantEnergy;
@@ -50,8 +50,8 @@ public class Animal implements IPositionChangeObserver{
         return this.directionToVector();
     } //czy potrzebne?
     public ArrayList<Integer> createGenotype(ArrayList<Integer> genotype1, ArrayList<Integer> genotype2, int energy1, int energy2){
-        ArrayList<Integer> ret = new ArrayList<Integer>(32);
-        int side = getRandomNumber(0,1);
+        ArrayList<Integer> ret = new ArrayList<>(32);
+        int side = getRandomNumber(0,2);
         int sum = energy1 + energy2;
         int div;
         if(energy1>energy2){
@@ -98,9 +98,9 @@ public class Animal implements IPositionChangeObserver{
         return ret;
     }
     public ArrayList<Integer> createRandomGenotype(){
-        ArrayList<Integer> ret = new ArrayList<Integer>(32);
+        ArrayList<Integer> ret = new ArrayList<>(32);
         for(int i = 0; i<32; i++){
-            ret.add(getRandomNumber(0,7));
+            ret.add(getRandomNumber(0,8));
         }
         Collections.sort(ret);
         return ret;
