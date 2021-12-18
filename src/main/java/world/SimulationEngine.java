@@ -4,6 +4,7 @@ import gui.App;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Random;
 import java.util.Set;
 
 public class SimulationEngine implements Runnable{
@@ -31,8 +32,7 @@ public class SimulationEngine implements Runnable{
         this.application = application;
     }
     public void run(){
-        for(int day = 0; day < this.days; day++) {
-            System.out.println(day);
+        for(int day = 0; day < this.days; day++){
             removeDeadAnimals();
             moveAnimals();
             eat();
@@ -62,7 +62,6 @@ public class SimulationEngine implements Runnable{
     public void moveAnimals(){
         for(Animal animal : this.map.animalList){
             int randRotation = animal.getGenotype().get(getRandomNumber(0,32));
-            Vector2d oldPos = animal.getPosition();
             if(randRotation == 0){
                 this.map.moveForward(animal);
             }
@@ -142,7 +141,7 @@ public class SimulationEngine implements Runnable{
                 for(int r = 0; r<=this.height+1; r++){
                     for(int c = 0; c<=this.width+1; c++){
                         toTry = new Vector2d(c,r);
-                        if(!(this.map.isOccupied(toTry) && this.map.isJungle(toTry))) {
+                        if(!(this.map.isOccupied(toTry) && this.map.isJungle(toTry))){
                             this.map.addGrass(toTry, this.plantEnergy);
                             break outerloop;
                         }
@@ -162,8 +161,8 @@ public class SimulationEngine implements Runnable{
             }
             if(tries == 0){
                 outerloop:
-                for(int r = 0; r<=this.map.jungleCorners[1].y - this.map.jungleCorners[0].y; r++){
-                    for(int c = 0; c<=this.map.jungleCorners[1].x - this.map.jungleCorners[0].x; c++){
+                for(int r = this.map.jungleCorners[0].y; r<=this.map.jungleCorners[1].y; r++){
+                    for(int c = this.map.jungleCorners[0].x; c<=this.map.jungleCorners[1].x; c++){
                         toTry = new Vector2d(c, r);
                         if(!this.map.isOccupied(toTry)){
                             this.map.addJungle(toTry, this.plantEnergy);
@@ -181,6 +180,6 @@ public class SimulationEngine implements Runnable{
         this.application.drawMap();
     }
     public int getRandomNumber(int min, int max) {
-        return (int) ((Math.random() * (max - min)) + min);
+        return new Random().nextInt(max) + min;
     }
 }

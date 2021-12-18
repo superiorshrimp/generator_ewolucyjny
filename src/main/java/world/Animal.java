@@ -2,6 +2,7 @@ package world;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Random;
 
 public class Animal implements IPositionChangeObserver{
     private int energy;
@@ -35,19 +36,19 @@ public class Animal implements IPositionChangeObserver{
     public Vector2d directionToVector(){
         Vector2d res;
         switch(this.facing){
-            case 0: res = new Vector2d(0,1); //N
-            case 1: res = new Vector2d(1,1); //NE
-            case 2: res = new Vector2d(1,0); //E
-            case 3: res = new Vector2d(1,-1); //SE
-            case 4: res = new Vector2d(0,-1); //S
-            case 5: res = new Vector2d(-1,-1); //SW
-            case 6: res = new Vector2d(-1,0); //W
-            default: res = new Vector2d(-1,1); //NW
+            case 0: res = new Vector2d(0,1); break;//N
+            case 1: res = new Vector2d(1,1); break;//NE
+            case 2: res = new Vector2d(1,0); break;//E
+            case 3: res = new Vector2d(1,-1); break;//SE
+            case 4: res = new Vector2d(0,-1); break;//S
+            case 5: res = new Vector2d(-1,-1); break;//SW
+            case 6: res = new Vector2d(-1,0); break;//W
+            default: res = new Vector2d(-1,1); break;//NW
         };
         return res;
     }
-    public Vector2d getFacing(){
-        return this.directionToVector();
+    public int getFacing(){
+        return this.facing;
     } //czy potrzebne?
     public ArrayList<Integer> createGenotype(ArrayList<Integer> genotype1, ArrayList<Integer> genotype2, int energy1, int energy2){
         ArrayList<Integer> ret = new ArrayList<>(32);
@@ -112,7 +113,7 @@ public class Animal implements IPositionChangeObserver{
         return this.genotype;
     }
     public int getRandomNumber(int min, int max) {
-        return (int) ((Math.random() * (max - min)) + min);
+        return new Random().nextInt(max) + min;
     }
     public Vector2d getPosition(){
         return this.position;

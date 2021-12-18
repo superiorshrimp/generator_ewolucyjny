@@ -12,8 +12,8 @@ public class GuiElementBox{
         try {
             Image image = new Image(new FileInputStream(directory));
             ImageView imageView = new ImageView(image);
-            imageView.setFitWidth(10);
-            imageView.setFitHeight(10);
+            imageView.setFitWidth(20);
+            imageView.setFitHeight(20);
             this.imageView = imageView;
         }
         catch (FileNotFoundException e) {
