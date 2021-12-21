@@ -4,6 +4,10 @@ import CSV.CSVReader;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -32,11 +36,20 @@ public class App extends Application{
     public int spawnGrass;
     public double jungleRatio;
     public int mode;
-    public GridPane borderedMap = new GridPane();
-    public GridPane borderlessMap = new GridPane();
+    public final GridPane borderedMap = new GridPane();
+    public final GridPane borderlessMap = new GridPane();
+    public final NumberAxis bAGxAx = new NumberAxis();
+    public final NumberAxis bAGyAx = new NumberAxis();
+    public final LineChart<Number, Number> bAGChart = new LineChart(bAGxAx, bAGyAx);
+    public XYChart.Series<Number, Number> bAGSeries = new XYChart.Series<>();
+    public final NumberAxis lAGxAx = new NumberAxis();
+    public final NumberAxis lAGyAx = new NumberAxis();
+    public final LineChart<Number, Number> lAGChart = new LineChart(lAGxAx, lAGyAx);
+    public XYChart.Series<Number, Number> lAGSeries = new XYChart.Series<>();
     public ArrayList<GuiElementBox> grassImages;
     public ArrayList<GuiElementBox> strongAnimalImages;
     public ArrayList<GuiElementBox> weakAnimalImages;
+    public int running = 0;
     public void init(){
         String[] args = getParameters().getRaw().toArray(new String[0]);
         String filePath = args[0];
@@ -63,9 +76,11 @@ public class App extends Application{
         this.grassImages = new ArrayList<>(2*(1+width)*(1+height));
         for(int i = 0; i<=2*width*height; i++){
             this.grassImages.add(new GuiElementBox("src/main/resources/grass.png"));
-            this.strongAnimalImages.add(new GuiElementBox("src/main/resources/red.png"));
-            this.weakAnimalImages.add(new GuiElementBox("src/main/resources/blue.png"));
+            this.strongAnimalImages.add(new GuiElementBox("src/main/resources/blue.png"));
+            this.weakAnimalImages.add(new GuiElementBox("src/main/resources/red.png"));
         }
+        this.bAGChart.getData().add(this.bAGSeries);
+        this.lAGChart.getData().add(this.lAGSeries);
     }
     public void start(Stage primaryStage){
         TextField tfRefresh = new TextField(String.valueOf(this.refresh));
@@ -90,10 +105,10 @@ public class App extends Application{
         tfJungleRatio.textProperty().addListener((observable, oldValue, newValue) -> this.jungleRatio = Double.parseDouble(newValue));
         TextField tfMode = new TextField(String.valueOf(this.mode));
         tfMode.textProperty().addListener((observable, oldValue, newValue) -> this.mode = Integer.parseInt(newValue));
-        //borderedMap.setGridLinesVisible(true);
-        //borderlessMap.setGridLinesVisible(true);
         primaryStage.setTitle("Evolution");
-        Button start = new Button("press to start!");
+        Button start = new Button("press to start");
+        Button stop = new Button("press to stop");
+        Button resume = new Button("press to resume");
         start.setOnAction(action -> {
             AbstractWorldMap bMap = new WorldMapBordered(this.width, this.height, this.jungleRatio);
             AbstractWorldMap lMap = new WorldMapBorderless(this.width, this.height, this.jungleRatio);
@@ -135,10 +150,13 @@ public class App extends Application{
                 this.strongAnimalImages.add(new GuiElementBox("src/main/resources/red.png"));
                 this.weakAnimalImages.add(new GuiElementBox("src/main/resources/blue.png"));
             }
-            SimulationEngine engine = new SimulationEngine(this.bMap, this.refresh, this.width, this.height, this.days, this.startEnergy, this.moveEnergy, this.plantEnergy, this.spawnGrass, this);
+            this.running = 1;
+            SimulationEngine engine = new SimulationEngine(this.bMap, this.lMap, this.refresh, this.width, this.height, this.days, this.startEnergy, this.moveEnergy, this.plantEnergy, this.spawnGrass, this);
             Thread engineThread = new Thread(engine);
             engineThread.start();
         });
+        stop.setOnAction(act -> {this.running = 0;});
+        resume.setOnAction(act -> {this.running = 1;});
         VBox chosenParams = new VBox(new Text("Current parameters:"),
                 new HBox(new Text("refresh rate: "), tfRefresh),
                 new HBox(new Text("width: "), tfWidth),
@@ -151,8 +169,10 @@ public class App extends Application{
                 new HBox(new Text("plants: "), tfPlants),
                 new HBox(new Text("jungle ratio: "), tfJungleRatio),
                 new HBox(new Text("mode: "), tfMode),
-                start);
-        Scene scene = new Scene(new HBox(chosenParams, borderedMap, borderlessMap), 1600, 900);
+                start,
+                stop,
+                resume);
+        Scene scene = new Scene(new VBox(new HBox(chosenParams, borderedMap, borderlessMap), new HBox(bAGChart, lAGChart)), 1600, 900);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
@@ -191,40 +211,43 @@ public class App extends Application{
                     sa++;
                 }
             }
-            //zmiana
-            /*
+            //drawing second map below
             borderlessMap.getChildren().clear();
             keys = lMap.grasses.keySet();
             for(Vector2d location : keys){
                 Label toAdd = new Label();
-                GuiElementBox grass = new GuiElementBox("src/main/resources/grass.png");
-                toAdd.setGraphic(grass.imageView);
+                toAdd.setGraphic(this.grassImages.get(g).imageView);
                 borderlessMap.add(toAdd, location.x, location.y);
+                g++;
             }
             keys = lMap.jungle.keySet();
             for(Vector2d location : keys){
                 Label toAdd = new Label();
-                GuiElementBox grass = new GuiElementBox("src/main/resources/grass.png");
-                toAdd.setGraphic(grass.imageView);
+                toAdd.setGraphic(this.grassImages.get(g).imageView);
                 borderlessMap.add(toAdd, location.x, location.y);
+                g++;
             }
             keys = lMap.animals.keySet();
             for(Vector2d location : keys){
-                if(lMap.animals.get(location).getMaxEnergy() > 5*startEnergy){
+                if(lMap.animals.get(location).getMaxEnergy() < 5*this.startEnergy){
                     Label toAdd = new Label();
-                    GuiElementBox strong = new GuiElementBox("src/main/resources/red.png");
-                    toAdd.setGraphic(strong.imageView);
+                    toAdd.setGraphic(this.weakAnimalImages.get(wa).imageView);
                     borderlessMap.add(toAdd, location.x, location.y);
+                    wa++;
                 }
                 else{
                     Label toAdd = new Label();
-                    GuiElementBox weak = new GuiElementBox("src/main/resources/blue.png");
-                    toAdd.setGraphic(weak.imageView);
+                    toAdd.setGraphic(this.strongAnimalImages.get(sa).imageView);
                     borderlessMap.add(toAdd, location.x, location.y);
+                    sa++;
                 }
             }
-
-             */
+        });
+    }
+    public void drawGraph(int day){
+        Platform.runLater(() -> {
+            bAGSeries.getData().add(new XYChart.Data<>(day, this.bMap.animalsAlive));
+            lAGSeries.getData().add(new XYChart.Data<>(day, this.lMap.animalsAlive));
         });
     }
     public int getRandomNumber(int min, int max) {

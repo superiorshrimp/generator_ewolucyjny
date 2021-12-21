@@ -8,7 +8,8 @@ import java.util.Random;
 import java.util.Set;
 
 public class SimulationEngine implements Runnable{
-    public AbstractWorldMap map;
+    public AbstractWorldMap bMap;
+    public AbstractWorldMap lMap;
     public int refresh;
     public int width;
     public int height;
@@ -18,8 +19,9 @@ public class SimulationEngine implements Runnable{
     public int plantEnergy;
     public int spawnGrass;
     public App application;
-    public SimulationEngine(AbstractWorldMap map, int refresh, int width, int height, int days, int startEnergy, int moveEnergy, int plantEnergy, int spawnGrass, App application){
-        this.map = map;
+    public SimulationEngine(AbstractWorldMap bMap, AbstractWorldMap lMap, int refresh, int width, int height, int days, int startEnergy, int moveEnergy, int plantEnergy, int spawnGrass, App application){
+        this.bMap = bMap;
+        this.lMap = lMap;
         this.refresh = refresh;
         this.width = width;
         this.height = height;
@@ -28,17 +30,29 @@ public class SimulationEngine implements Runnable{
         this.moveEnergy = moveEnergy;
         this.plantEnergy = plantEnergy;
         this.spawnGrass = spawnGrass;
-        this.map.grassesAlive = spawnGrass;
+        this.bMap.grassesAlive = spawnGrass;
         this.application = application;
     }
     public void run(){
         for(int day = 0; day < this.days; day++){
-            removeDeadAnimals();
-            moveAnimals();
-            eat();
-            spawnNewAnimals();
-            plantGrass();
-            dayPassed();
+            while(this.application.running == 0){
+                try {
+                    Thread.sleep(this.refresh);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            removeDeadAnimals(bMap);
+            removeDeadAnimals(lMap);
+            moveAnimals(bMap);
+            moveAnimals(lMap);
+            eat(bMap);
+            eat(lMap);
+            spawnNewAnimals(bMap);
+            spawnNewAnimals(lMap);
+            plantGrass(bMap);
+            plantGrass(lMap);
+            dayPassed(day);
             try {
                 Thread.sleep(this.refresh);
             } catch (InterruptedException e) {
@@ -46,93 +60,93 @@ public class SimulationEngine implements Runnable{
             }
         }
     }
-    public void removeDeadAnimals(){
+    public void removeDeadAnimals(AbstractWorldMap map){
         ArrayList<Animal> toRemove = new ArrayList<>();
-        for (Animal animal : this.map.animalList) {
+        for (Animal animal : map.animalList) {
             if (animal.getEnergy() - this.moveEnergy < 0) {
                 toRemove.add(animal);
             }
         }
-        this.map.animalsAlive -= toRemove.size();
+        map.animalsAlive -= toRemove.size();
         Iterator<Animal> rmv = toRemove.iterator();
         while (rmv.hasNext()) {
-            this.map.removeAnimal(rmv.next());
+            map.removeAnimal(rmv.next());
         }
     }
-    public void moveAnimals(){
-        for(Animal animal : this.map.animalList){
+    public void moveAnimals(AbstractWorldMap map){
+        for(Animal animal : map.animalList){
             int randRotation = animal.getGenotype().get(getRandomNumber(0,32));
             if(randRotation == 0){
-                this.map.moveForward(animal);
+                map.moveForward(animal);
             }
             else if(randRotation == 4){
-                this.map.moveBackward(animal);
+                map.moveBackward(animal);
             }
             else{
                 animal.rotate(randRotation);
             }
         }
     }
-    public void eat(){
-        Set<Vector2d> keys = this.map.animals.keySet();
+    public void eat(AbstractWorldMap map){
+        Set<Vector2d> keys = map.animals.keySet();
         ArrayList<Vector2d> toRemove = new ArrayList<>();
         for(Vector2d location : keys) {
-            if (!this.map.isJungle(location)) {
-                if (this.map.grasses.containsKey(location)) {
-                    ArrayList<Animal> toFeed = this.map.animals.get(location).getAllStrongest();
+            if (!map.isJungle(location)) {
+                if (map.grasses.containsKey(location)) {
+                    ArrayList<Animal> toFeed = map.animals.get(location).getAllStrongest();
                     int count = toFeed.size();
                     for (Animal animal : toFeed) {
-                        animal.increaseEnergy(this.map.grasses.get(location).getPlantEnergy() / count);
+                        animal.increaseEnergy(map.grasses.get(location).getPlantEnergy() / count);
                     }
                     toRemove.add(location);
                 }
             } else {
-                if (this.map.jungle.containsKey(location)) {
-                    ArrayList<Animal> toFeed = this.map.animals.get(location).getAllStrongest();
+                if (map.jungle.containsKey(location)) {
+                    ArrayList<Animal> toFeed = map.animals.get(location).getAllStrongest();
                     int count = toFeed.size();
                     for (Animal animal : toFeed) {
-                        animal.increaseEnergy(this.map.jungle.get(location).getPlantEnergy() / count);
+                        animal.increaseEnergy(map.jungle.get(location).getPlantEnergy() / count);
                     }
                     toRemove.add(location);
                 }
             }
         }
-        this.map.grassesAlive -= toRemove.size();
+        map.grassesAlive -= toRemove.size();
         Iterator<Vector2d> rmv = toRemove.iterator();
         while(rmv.hasNext()){
             Vector2d location = rmv.next();
-            if(!this.map.isJungle(location)){
-                this.map.grasses.remove(location);
+            if(!map.isJungle(location)){
+                map.grasses.remove(location);
             }
             else{
-                this.map.jungle.remove(location);
+                map.jungle.remove(location);
             }
         }
     }
-    public void spawnNewAnimals(){
-        Set<Vector2d> keys = this.map.animals.keySet();
+    public void spawnNewAnimals(AbstractWorldMap map){
+        Set<Vector2d> keys = map.animals.keySet();
         for(Vector2d location : keys){
-            if(this.map.animals.get(location).animals.size()>=2){
-                ArrayList<Animal> parents = this.map.animals.get(location).get2Strongest();
+            if(map.animals.get(location).animals.size()>=2){
+                ArrayList<Animal> parents = map.animals.get(location).get2Strongest();
                 Animal a0 = parents.get(0);
                 Animal a1 = parents.get(1);
                 if(a0.getEnergy() >= this.startEnergy/2 && a1.getEnergy() >= this.startEnergy/2){
                     Animal baby = new Animal(location, (a0.getEnergy() + a1.getEnergy())/4, a0.getGenotype(), a1.getGenotype(), a0.getEnergy(), a1.getEnergy());
                     a0.decreaseEnergy(a0.getEnergy()/4); //not too clean, but works
                     a1.decreaseEnergy(a1.getEnergy()/4);
-                    this.map.addAnimal(baby);
-                    this.map.animalsAlive += 1;
-                    this.map.animals.get(location).updateStrongest();
-                    baby.addObserver(this.map);
+                    map.addAnimal(baby);
+                    map.animalsAlive += 1;
+                    map.animals.get(location).updateStrongest();
+                    baby.addObserver(map);
                 }
             }
         }
     }
-    public void plantGrass(){ //to check if works properly
+    public void plantGrass(AbstractWorldMap map){ //to check if works properly
         for(int i = 0; i<this.spawnGrass/2; i++){
             Vector2d toTry = new Vector2d(getRandomNumber(0, this.width)+1, getRandomNumber(0, this.height)+1);
             int tries = this.width*this.height;
-            while((this.map.isJungle(toTry) || this.map.isOccupied(toTry)) && (tries > 0)){
+            while((map.isJungle(toTry) || map.isOccupied(toTry)) && (tries > 0)){
                 tries--;
                 toTry = new Vector2d(getRandomNumber(0, this.width+1), getRandomNumber(0, this.height+1));
             }
@@ -141,43 +155,44 @@ public class SimulationEngine implements Runnable{
                 for(int r = 0; r<=this.height+1; r++){
                     for(int c = 0; c<=this.width+1; c++){
                         toTry = new Vector2d(c,r);
-                        if(!(this.map.isOccupied(toTry) && this.map.isJungle(toTry))){
-                            this.map.addGrass(toTry, this.plantEnergy);
+                        if(!(map.isOccupied(toTry) && map.isJungle(toTry))){
+                            map.addGrass(toTry, this.plantEnergy);
                             break outerloop;
                         }
                     }
                 }
             }
             else{
-                this.map.addGrass(toTry, this.plantEnergy);
+                map.addGrass(toTry, this.plantEnergy);
             }
         }
         for(int i = 0; i<this.spawnGrass/2; i++){
-            Vector2d toTry = new Vector2d(getRandomNumber(this.map.jungleCorners[0].x, this.map.jungleCorners[1].x+1), getRandomNumber(this.map.jungleCorners[0].y, this.map.jungleCorners[1].y+1));
-            int tries = (this.map.jungleCorners[1].x - this.map.jungleCorners[0].x)*(this.map.jungleCorners[1].y - this.map.jungleCorners[0].y);
-            while((!this.map.isJungle(toTry) || this.map.isOccupied(toTry)) && (tries > 0)){
+            Vector2d toTry = new Vector2d(getRandomNumber(map.jungleCorners[0].x, map.jungleCorners[1].x+1), getRandomNumber(map.jungleCorners[0].y, map.jungleCorners[1].y+1));
+            int tries = (map.jungleCorners[1].x - map.jungleCorners[0].x)*(map.jungleCorners[1].y - map.jungleCorners[0].y);
+            while((!map.isJungle(toTry) || map.isOccupied(toTry)) && (tries > 0)){
                 tries--;
-                toTry = new Vector2d(getRandomNumber(this.map.jungleCorners[0].x, this.map.jungleCorners[1].x), getRandomNumber(this.map.jungleCorners[0].y, this.map.jungleCorners[1].y));
+                toTry = new Vector2d(getRandomNumber(map.jungleCorners[0].x, map.jungleCorners[1].x), getRandomNumber(map.jungleCorners[0].y, map.jungleCorners[1].y));
             }
             if(tries == 0){
                 outerloop:
-                for(int r = this.map.jungleCorners[0].y; r<=this.map.jungleCorners[1].y; r++){
-                    for(int c = this.map.jungleCorners[0].x; c<=this.map.jungleCorners[1].x; c++){
+                for(int r = map.jungleCorners[0].y; r<=map.jungleCorners[1].y; r++){
+                    for(int c = map.jungleCorners[0].x; c<=map.jungleCorners[1].x; c++){
                         toTry = new Vector2d(c, r);
-                        if(!this.map.isOccupied(toTry)){
-                            this.map.addJungle(toTry, this.plantEnergy);
+                        if(!map.isOccupied(toTry)){
+                            map.addJungle(toTry, this.plantEnergy);
                             break outerloop;
                         }
                     }
                 }
             }
             else{
-                this.map.addJungle(toTry, this.plantEnergy);
+                map.addJungle(toTry, this.plantEnergy);
             }
         }
     }
-    public void dayPassed(){
+    public void dayPassed(int day){
         this.application.drawMap();
+        this.application.drawGraph(day);
     }
     public int getRandomNumber(int min, int max) {
         return new Random().nextInt(max) + min;
