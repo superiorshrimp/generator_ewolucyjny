@@ -60,6 +60,12 @@ public class App extends Application{
     public XYChart.Series<Number, Number> bDSeries = new XYChart.Series<>();
     public XYChart.Series<Number, Number> bAlSeries = new XYChart.Series<>();
 
+    public final NumberAxis lLDxAx = new NumberAxis();
+    public final NumberAxis lLDyAx = new NumberAxis();
+    public final LineChart<Number, Number> lLDChart = new LineChart(lLDxAx, lLDyAx);
+    public XYChart.Series<Number, Number> lDSeries = new XYChart.Series<>();
+    public XYChart.Series<Number, Number> lAlSeries = new XYChart.Series<>();
+
     public int running = 0;
     public void init(){
         String[] args = getParameters().getRaw().toArray(new String[0]);
@@ -85,11 +91,6 @@ public class App extends Application{
         this.strongAnimalImages = new ArrayList<>(2*(1+width)*(1+height));
         this.weakAnimalImages = new ArrayList<>(2*(1+width)*(1+height));
         this.grassImages = new ArrayList<>(2*(1+width)*(1+height));
-        for(int i = 0; i<=2*width*height; i++){
-            this.grassImages.add(new GuiElementBox("src/main/resources/grass.png"));
-            this.strongAnimalImages.add(new GuiElementBox("src/main/resources/blue.png"));
-            this.weakAnimalImages.add(new GuiElementBox("src/main/resources/red.png"));
-        }
         this.bAGxAx.setLabel("day");
         this.bAGyAx.setLabel("count");
         this.bASeries.setName("animals");
@@ -110,6 +111,13 @@ public class App extends Application{
         this.bAlSeries.setName("alive");
         this.bLDChart.getData().add(this.bDSeries);
         this.bLDChart.getData().add(this.bAlSeries);
+
+        this.lLDxAx.setLabel("day");
+        this.lLDyAx.setLabel("average lifespan of animals");
+        this.lDSeries.setName("dead");
+        this.lAlSeries.setName("alive");
+        this.lLDChart.getData().add(this.lDSeries);
+        this.lLDChart.getData().add(this.lAlSeries);
     }
     public void start(Stage primaryStage){
         TextField tfRefresh = new TextField(String.valueOf(this.refresh));
@@ -174,7 +182,7 @@ public class App extends Application{
             this.strongAnimalImages = new ArrayList<>(2*(1+width)*(1+height));
             this.weakAnimalImages = new ArrayList<>(2*(1+width)*(1+height));
             this.grassImages = new ArrayList<>(2*(1+width)*(1+height));
-            for(int i = 0; i<=2*width*height; i++){
+            for(int i = 0; i<=2*(width+1)*(height+1); i++){
                 this.grassImages.add(new GuiElementBox("src/main/resources/grass.png"));
                 this.strongAnimalImages.add(new GuiElementBox("src/main/resources/red.png"));
                 this.weakAnimalImages.add(new GuiElementBox("src/main/resources/blue.png"));
@@ -280,6 +288,7 @@ public class App extends Application{
 
             lASeries.getData().add(new XYChart.Data<>(day, this.lMap.animalsAlive));
             lGSeries.getData().add(new XYChart.Data<>(day, this.lMap.grassesAlive));
+
             if(this.bMap.deadCount == 0){
                 bDSeries.getData().add(new XYChart.Data<>(day, 0));
             }
@@ -291,6 +300,19 @@ public class App extends Application{
             }
             else{
                 bAlSeries.getData().add(new XYChart.Data<>(day, sumAliveLifespan/this.bMap.animalsAlive));
+            }
+
+            if(this.lMap.deadCount == 0){
+                lDSeries.getData().add(new XYChart.Data<>(day, 0));
+            }
+            else{
+                lDSeries.getData().add(new XYChart.Data<>(day, this.lMap.sumDeadLifespan/this.lMap.deadCount));
+            }
+            if(this.lMap.animalsAlive == 0){
+                lAlSeries.getData().add(new XYChart.Data<>(day, 0));
+            }
+            else{
+                lAlSeries.getData().add(new XYChart.Data<>(day, sumAliveLifespan/this.lMap.animalsAlive));
             }
         });
     }
