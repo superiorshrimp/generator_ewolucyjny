@@ -15,6 +15,8 @@ public class AbstractWorldMap implements IPositionChangeObserver{
     public Vector2d[] corners;
     public int animalsAlive;
     public int grassesAlive;
+    public int sumDeadLifespan;
+    public int deadCount;
     public AbstractWorldMap(int width, int height, double jungleRatio){
         this.width = width;
         this.height = height;
@@ -34,6 +36,8 @@ public class AbstractWorldMap implements IPositionChangeObserver{
         this.jungle = new LinkedHashMap<>();
         this.animalsAlive = 0;
         this.grassesAlive = 0;
+        this.sumDeadLifespan = 0;
+        this.deadCount = 0;
     }
     public void addAnimal(Animal toAdd){
         this.animalList.add(toAdd);

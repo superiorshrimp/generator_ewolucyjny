@@ -4,7 +4,6 @@ import CSV.CSVReader;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
-import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
@@ -38,17 +37,29 @@ public class App extends Application{
     public int mode;
     public final GridPane borderedMap = new GridPane();
     public final GridPane borderlessMap = new GridPane();
+
     public final NumberAxis bAGxAx = new NumberAxis();
     public final NumberAxis bAGyAx = new NumberAxis();
     public final LineChart<Number, Number> bAGChart = new LineChart(bAGxAx, bAGyAx);
-    public XYChart.Series<Number, Number> bAGSeries = new XYChart.Series<>();
+    public XYChart.Series<Number, Number> bASeries = new XYChart.Series<>();
+    public XYChart.Series<Number, Number> bGSeries = new XYChart.Series<>();
+
     public final NumberAxis lAGxAx = new NumberAxis();
     public final NumberAxis lAGyAx = new NumberAxis();
     public final LineChart<Number, Number> lAGChart = new LineChart(lAGxAx, lAGyAx);
-    public XYChart.Series<Number, Number> lAGSeries = new XYChart.Series<>();
+    public XYChart.Series<Number, Number> lASeries = new XYChart.Series<>();
+    public XYChart.Series<Number, Number> lGSeries = new XYChart.Series<>();
+
     public ArrayList<GuiElementBox> grassImages;
     public ArrayList<GuiElementBox> strongAnimalImages;
     public ArrayList<GuiElementBox> weakAnimalImages;
+
+    public final NumberAxis bLDxAx = new NumberAxis();
+    public final NumberAxis bLDyAx = new NumberAxis();
+    public final LineChart<Number, Number> bLDChart = new LineChart(bLDxAx, bLDyAx);
+    public XYChart.Series<Number, Number> bDSeries = new XYChart.Series<>();
+    public XYChart.Series<Number, Number> bAlSeries = new XYChart.Series<>();
+
     public int running = 0;
     public void init(){
         String[] args = getParameters().getRaw().toArray(new String[0]);
@@ -79,8 +90,26 @@ public class App extends Application{
             this.strongAnimalImages.add(new GuiElementBox("src/main/resources/blue.png"));
             this.weakAnimalImages.add(new GuiElementBox("src/main/resources/red.png"));
         }
-        this.bAGChart.getData().add(this.bAGSeries);
-        this.lAGChart.getData().add(this.lAGSeries);
+        this.bAGxAx.setLabel("day");
+        this.bAGyAx.setLabel("count");
+        this.bASeries.setName("animals");
+        this.bGSeries.setName("grasses");
+        this.bAGChart.getData().add(this.bASeries);
+        this.bAGChart.getData().add(this.bGSeries);
+
+        this.lAGxAx.setLabel("day");
+        this.lAGyAx.setLabel("count");
+        this.lASeries.setName("animals");
+        this.lGSeries.setName("grasses");
+        this.lAGChart.getData().add(this.lASeries);
+        this.lAGChart.getData().add(this.lGSeries);
+
+        this.bLDxAx.setLabel("day");
+        this.bLDyAx.setLabel("average lifespan of animals");
+        this.bDSeries.setName("dead");
+        this.bAlSeries.setName("alive");
+        this.bLDChart.getData().add(this.bDSeries);
+        this.bLDChart.getData().add(this.bAlSeries);
     }
     public void start(Stage primaryStage){
         TextField tfRefresh = new TextField(String.valueOf(this.refresh));
@@ -172,7 +201,7 @@ public class App extends Application{
                 start,
                 stop,
                 resume);
-        Scene scene = new Scene(new VBox(new HBox(chosenParams, borderedMap, borderlessMap), new HBox(bAGChart, lAGChart)), 1600, 900);
+        Scene scene = new Scene(new VBox(new HBox(chosenParams, borderedMap, borderlessMap), new HBox(bAGChart, lAGChart, bLDChart)), 1600, 900);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
@@ -244,10 +273,25 @@ public class App extends Application{
             }
         });
     }
-    public void drawGraph(int day){
+    public void drawGraph(int day, int sumAliveLifespan){
         Platform.runLater(() -> {
-            bAGSeries.getData().add(new XYChart.Data<>(day, this.bMap.animalsAlive));
-            lAGSeries.getData().add(new XYChart.Data<>(day, this.lMap.animalsAlive));
+            bASeries.getData().add(new XYChart.Data<>(day, this.bMap.animalsAlive));
+            bGSeries.getData().add(new XYChart.Data<>(day, this.bMap.grassesAlive));
+
+            lASeries.getData().add(new XYChart.Data<>(day, this.lMap.animalsAlive));
+            lGSeries.getData().add(new XYChart.Data<>(day, this.lMap.grassesAlive));
+            if(this.bMap.deadCount == 0){
+                bDSeries.getData().add(new XYChart.Data<>(day, 0));
+            }
+            else{
+                bDSeries.getData().add(new XYChart.Data<>(day, this.bMap.sumDeadLifespan/this.bMap.deadCount));
+            }
+            if(this.bMap.animalsAlive == 0){
+                bAlSeries.getData().add(new XYChart.Data<>(day, 0));
+            }
+            else{
+                bAlSeries.getData().add(new XYChart.Data<>(day, sumAliveLifespan/this.bMap.animalsAlive));
+            }
         });
     }
     public int getRandomNumber(int min, int max) {

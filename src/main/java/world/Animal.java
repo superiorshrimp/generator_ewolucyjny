@@ -10,19 +10,22 @@ public class Animal implements IPositionChangeObserver{
     private int facing;
     private Vector2d position;
     public ArrayList<IPositionChangeObserver> observers;
+    public int dayOfBirth;
     public Animal(Vector2d location, int energy){
         this.position = location;
         this.observers = new ArrayList<>();
         this.energy = energy;
         this.genotype = createRandomGenotype();
         this.facing = getRandomNumber(0,8);
+        this.dayOfBirth = 0;
     }
-    public Animal(Vector2d location, int energy, ArrayList<Integer> genotype1, ArrayList<Integer> genotype2, int energy1, int energy2){
+    public Animal(Vector2d location, int energy, ArrayList<Integer> genotype1, ArrayList<Integer> genotype2, int energy1, int energy2, int day){
         this.position = location;
         this.observers = new ArrayList<>();
         this.energy = energy;
         this.genotype = createGenotype(genotype1, genotype2, energy1, energy2);
         this.facing = getRandomNumber(0,8);
+        this.dayOfBirth = day;
     }
     public void increaseEnergy(int plantEnergy){
         this.energy += plantEnergy;

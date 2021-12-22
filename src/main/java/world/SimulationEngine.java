@@ -19,6 +19,7 @@ public class SimulationEngine implements Runnable{
     public int plantEnergy;
     public int spawnGrass;
     public App application;
+    public int sumAliveLifespan;
     public SimulationEngine(AbstractWorldMap bMap, AbstractWorldMap lMap, int refresh, int width, int height, int days, int startEnergy, int moveEnergy, int plantEnergy, int spawnGrass, App application){
         this.bMap = bMap;
         this.lMap = lMap;
@@ -32,6 +33,7 @@ public class SimulationEngine implements Runnable{
         this.spawnGrass = spawnGrass;
         this.bMap.grassesAlive = spawnGrass;
         this.application = application;
+        this.sumAliveLifespan = 0;
     }
     public void run(){
         for(int day = 0; day < this.days; day++){
@@ -42,14 +44,15 @@ public class SimulationEngine implements Runnable{
                     e.printStackTrace();
                 }
             }
-            removeDeadAnimals(bMap);
-            removeDeadAnimals(lMap);
+            this.sumAliveLifespan = 0;
+            removeDeadAnimals(bMap, day);
+            removeDeadAnimals(lMap, day);
             moveAnimals(bMap);
             moveAnimals(lMap);
             eat(bMap);
             eat(lMap);
-            spawnNewAnimals(bMap);
-            spawnNewAnimals(lMap);
+            spawnNewAnimals(bMap, day);
+            spawnNewAnimals(lMap, day);
             plantGrass(bMap);
             plantGrass(lMap);
             dayPassed(day);
@@ -60,17 +63,24 @@ public class SimulationEngine implements Runnable{
             }
         }
     }
-    public void removeDeadAnimals(AbstractWorldMap map){
+    public void removeDeadAnimals(AbstractWorldMap map, int day){
         ArrayList<Animal> toRemove = new ArrayList<>();
         for (Animal animal : map.animalList) {
-            if (animal.getEnergy() - this.moveEnergy < 0) {
+            if (animal.getEnergy() - this.moveEnergy < 0){
                 toRemove.add(animal);
+            }
+            else{
+                this.sumAliveLifespan += day - animal.dayOfBirth;
+                animal.decreaseEnergy(this.moveEnergy);
             }
         }
         map.animalsAlive -= toRemove.size();
         Iterator<Animal> rmv = toRemove.iterator();
-        while (rmv.hasNext()) {
-            map.removeAnimal(rmv.next());
+        while(rmv.hasNext()){
+            Animal tormv = rmv.next();
+            map.sumDeadLifespan += day - tormv.dayOfBirth;
+            map.deadCount += 1;
+            map.removeAnimal(tormv);
         }
     }
     public void moveAnimals(AbstractWorldMap map){
@@ -123,7 +133,7 @@ public class SimulationEngine implements Runnable{
             }
         }
     }
-    public void spawnNewAnimals(AbstractWorldMap map){
+    public void spawnNewAnimals(AbstractWorldMap map, int day){
         Set<Vector2d> keys = map.animals.keySet();
         for(Vector2d location : keys){
             if(map.animals.get(location).animals.size()>=2){
@@ -131,7 +141,7 @@ public class SimulationEngine implements Runnable{
                 Animal a0 = parents.get(0);
                 Animal a1 = parents.get(1);
                 if(a0.getEnergy() >= this.startEnergy/2 && a1.getEnergy() >= this.startEnergy/2){
-                    Animal baby = new Animal(location, (a0.getEnergy() + a1.getEnergy())/4, a0.getGenotype(), a1.getGenotype(), a0.getEnergy(), a1.getEnergy());
+                    Animal baby = new Animal(location, (a0.getEnergy() + a1.getEnergy())/4, a0.getGenotype(), a1.getGenotype(), a0.getEnergy(), a1.getEnergy(), day);
                     a0.decreaseEnergy(a0.getEnergy()/4); //not too clean, but works
                     a1.decreaseEnergy(a1.getEnergy()/4);
                     map.addAnimal(baby);
@@ -157,6 +167,7 @@ public class SimulationEngine implements Runnable{
                         toTry = new Vector2d(c,r);
                         if(!(map.isOccupied(toTry) && map.isJungle(toTry))){
                             map.addGrass(toTry, this.plantEnergy);
+                            map.grassesAlive++;
                             break outerloop;
                         }
                     }
@@ -164,6 +175,7 @@ public class SimulationEngine implements Runnable{
             }
             else{
                 map.addGrass(toTry, this.plantEnergy);
+                map.grassesAlive++;
             }
         }
         for(int i = 0; i<this.spawnGrass/2; i++){
@@ -180,6 +192,7 @@ public class SimulationEngine implements Runnable{
                         toTry = new Vector2d(c, r);
                         if(!map.isOccupied(toTry)){
                             map.addJungle(toTry, this.plantEnergy);
+                            map.grassesAlive++;
                             break outerloop;
                         }
                     }
@@ -187,12 +200,13 @@ public class SimulationEngine implements Runnable{
             }
             else{
                 map.addJungle(toTry, this.plantEnergy);
+                map.grassesAlive++;
             }
         }
     }
     public void dayPassed(int day){
         this.application.drawMap();
-        this.application.drawGraph(day);
+        this.application.drawGraph(day, this.sumAliveLifespan);
     }
     public int getRandomNumber(int min, int max) {
         return new Random().nextInt(max) + min;
