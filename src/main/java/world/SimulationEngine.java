@@ -6,10 +6,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class SimulationEngine implements Runnable{
-    public AbstractWorldMap bMap;
-    public AbstractWorldMap lMap;
+    public AbstractWorldMap map;
     public int refresh;
     public int width;
     public int height;
@@ -20,9 +20,9 @@ public class SimulationEngine implements Runnable{
     public int spawnGrass;
     public App application;
     public int sumAliveLifespan;
-    public SimulationEngine(AbstractWorldMap bMap, AbstractWorldMap lMap, int refresh, int width, int height, int days, int startEnergy, int moveEnergy, int plantEnergy, int spawnGrass, App application){
-        this.bMap = bMap;
-        this.lMap = lMap;
+    public AtomicInteger running;
+    public SimulationEngine(AbstractWorldMap map, int refresh, int width, int height, int days, int startEnergy, int moveEnergy, int plantEnergy, int spawnGrass, App application, AtomicInteger running){
+        this.map = map;
         this.refresh = refresh;
         this.width = width;
         this.height = height;
@@ -31,31 +31,32 @@ public class SimulationEngine implements Runnable{
         this.moveEnergy = moveEnergy;
         this.plantEnergy = plantEnergy;
         this.spawnGrass = spawnGrass;
-        this.bMap.grassesAlive = spawnGrass;
+        this.map.grassesAlive = spawnGrass;
         this.application = application;
         this.sumAliveLifespan = 0;
+        this.running = running;
     }
     public void run(){
         for(int day = 0; day < this.days; day++){
-            while(this.application.running == 0){
+            while(running.intValue() == 0){
                 try {
-                    Thread.sleep(this.refresh);
+                    Thread.sleep(10);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
             this.sumAliveLifespan = 0;
-            removeDeadAnimals(bMap, day);
-            removeDeadAnimals(lMap, day);
-            moveAnimals(bMap);
-            moveAnimals(lMap);
-            eat(bMap);
-            eat(lMap);
-            spawnNewAnimals(bMap, day);
-            spawnNewAnimals(lMap, day);
-            plantGrass(bMap);
-            plantGrass(lMap);
-            dayPassed(day);
+            removeDeadAnimals(map, day);
+            moveAnimals(map);
+            eat(map);
+            spawnNewAnimals(map, day);
+            plantGrass(map);
+            if(this.map instanceof WorldMapBordered){
+                bDayPassed(day);
+            }
+            else{
+                lDayPassed(day);
+            }
             try {
                 Thread.sleep(this.refresh);
             } catch (InterruptedException e) {
@@ -162,8 +163,8 @@ public class SimulationEngine implements Runnable{
             }
             if(tries == 0){
                 outerloop:
-                for(int r = 0; r<=this.height+1; r++){
-                    for(int c = 0; c<=this.width+1; c++){
+                for(int r = 0; r<=this.height; r++){
+                    for(int c = 0; c<=this.width; c++){
                         toTry = new Vector2d(c,r);
                         if(!(map.isOccupied(toTry) && map.isJungle(toTry))){
                             map.addGrass(toTry, this.plantEnergy);
@@ -204,9 +205,13 @@ public class SimulationEngine implements Runnable{
             }
         }
     }
-    public void dayPassed(int day){
-        this.application.drawMap();
-        this.application.drawGraph(day, this.sumAliveLifespan);
+    public void bDayPassed(int day){
+        this.application.drawBorderedMap();
+        this.application.drawBorderedGraph(day, this.sumAliveLifespan);
+    }
+    public void lDayPassed(int day){
+        this.application.drawBorderlessMap();
+        this.application.drawBorderlessGraph(day, this.sumAliveLifespan);
     }
     public int getRandomNumber(int min, int max) {
         return new Random().nextInt(max) + min;

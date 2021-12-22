@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class App extends Application{
     public String[] parameters;
@@ -66,7 +67,8 @@ public class App extends Application{
     public XYChart.Series<Number, Number> lDSeries = new XYChart.Series<>();
     public XYChart.Series<Number, Number> lAlSeries = new XYChart.Series<>();
 
-    public int running = 0;
+    public AtomicInteger bRunning = new AtomicInteger(0);
+    public AtomicInteger lRunning = new AtomicInteger(0);
     public void init(){
         String[] args = getParameters().getRaw().toArray(new String[0]);
         String filePath = args[0];
@@ -144,8 +146,10 @@ public class App extends Application{
         tfMode.textProperty().addListener((observable, oldValue, newValue) -> this.mode = Integer.parseInt(newValue));
         primaryStage.setTitle("Evolution");
         Button start = new Button("press to start");
-        Button stop = new Button("press to stop");
-        Button resume = new Button("press to resume");
+        Button bStop = new Button("press to stop bordered map");
+        Button bResume = new Button("press to resume bordered map");
+        Button lStop = new Button("press to stop borderless map");
+        Button lResume = new Button("press to resume borderless map");
         start.setOnAction(action -> {
             AbstractWorldMap bMap = new WorldMapBordered(this.width, this.height, this.jungleRatio);
             AbstractWorldMap lMap = new WorldMapBorderless(this.width, this.height, this.jungleRatio);
@@ -187,13 +191,19 @@ public class App extends Application{
                 this.strongAnimalImages.add(new GuiElementBox("src/main/resources/red.png"));
                 this.weakAnimalImages.add(new GuiElementBox("src/main/resources/blue.png"));
             }
-            this.running = 1;
-            SimulationEngine engine = new SimulationEngine(this.bMap, this.lMap, this.refresh, this.width, this.height, this.days, this.startEnergy, this.moveEnergy, this.plantEnergy, this.spawnGrass, this);
-            Thread engineThread = new Thread(engine);
-            engineThread.start();
+            this.bRunning.set(1);
+            this.lRunning.set(1);
+            SimulationEngine bEngine = new SimulationEngine(this.bMap, this.refresh, this.width, this.height, this.days, this.startEnergy, this.moveEnergy, this.plantEnergy, this.spawnGrass, this, bRunning);
+            Thread bEngineThread = new Thread(bEngine);
+            bEngineThread.start();
+            SimulationEngine lEngine = new SimulationEngine(this.lMap, this.refresh, this.width, this.height, this.days, this.startEnergy, this.moveEnergy, this.plantEnergy, this.spawnGrass, this, lRunning);
+            Thread lEngineThread = new Thread(lEngine);
+            lEngineThread.start();
         });
-        stop.setOnAction(act -> {this.running = 0;});
-        resume.setOnAction(act -> {this.running = 1;});
+        bStop.setOnAction(act -> {this.bRunning.set(0);});
+        bResume.setOnAction(act -> {this.bRunning.set(1);});
+        lStop.setOnAction(act -> {this.lRunning.set(0);});
+        lResume.setOnAction(act -> {this.lRunning.set(1);});
         VBox chosenParams = new VBox(new Text("Current parameters:"),
                 new HBox(new Text("refresh rate: "), tfRefresh),
                 new HBox(new Text("width: "), tfWidth),
@@ -207,14 +217,21 @@ public class App extends Application{
                 new HBox(new Text("jungle ratio: "), tfJungleRatio),
                 new HBox(new Text("mode: "), tfMode),
                 start,
-                stop,
-                resume);
-        Scene scene = new Scene(new VBox(new HBox(chosenParams, borderedMap, borderlessMap), new HBox(bAGChart, lAGChart, bLDChart)), 1600, 900);
+                bStop,
+                bResume,
+                lStop,
+                lResume);
+        Scene scene = new Scene(new VBox(new HBox(chosenParams, borderedMap, borderlessMap), new HBox(bAGChart, lAGChart, bLDChart, lLDChart)), 1600, 900);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
-    public void drawMap(){
+    public void drawBorderedMap(){
         Platform.runLater(() -> {
+            int flag = 0;
+            if(this.bRunning.intValue() == 1){
+                flag = 1;
+                this.bRunning.set(0);
+            }
             int g = 0;
             int sa = 0;
             int wa = 0;
@@ -248,46 +265,64 @@ public class App extends Application{
                     sa++;
                 }
             }
-            //drawing second map below
+            if(flag == 1){
+                this.bRunning.set(1);
+            }
+        });
+    }
+    public void drawBorderlessMap(){
+        Platform.runLater(() -> {
+            int flag = 0;
+            if(this.lRunning.intValue() == 1){
+                flag = 1;
+                this.lRunning.set(0);
+            }
+            int g = (this.width+1)*(this.height+1);
+            int sa = (this.width+1)*(this.height+1);
+            int wa = (this.width+1)*(this.height+1);
             borderlessMap.getChildren().clear();
-            keys = lMap.grasses.keySet();
-            for(Vector2d location : keys){
+            Set<Vector2d> keys = lMap.grasses.keySet();
+            for (Vector2d location : keys) {
                 Label toAdd = new Label();
                 toAdd.setGraphic(this.grassImages.get(g).imageView);
                 borderlessMap.add(toAdd, location.x, location.y);
                 g++;
             }
             keys = lMap.jungle.keySet();
-            for(Vector2d location : keys){
+            for (Vector2d location : keys) {
                 Label toAdd = new Label();
                 toAdd.setGraphic(this.grassImages.get(g).imageView);
                 borderlessMap.add(toAdd, location.x, location.y);
                 g++;
             }
             keys = lMap.animals.keySet();
-            for(Vector2d location : keys){
-                if(lMap.animals.get(location).getMaxEnergy() < 5*this.startEnergy){
+            for (Vector2d location : keys) {
+                if (lMap.animals.get(location).getMaxEnergy() < 5 * this.startEnergy) {
                     Label toAdd = new Label();
                     toAdd.setGraphic(this.weakAnimalImages.get(wa).imageView);
                     borderlessMap.add(toAdd, location.x, location.y);
                     wa++;
-                }
-                else{
+                } else {
                     Label toAdd = new Label();
                     toAdd.setGraphic(this.strongAnimalImages.get(sa).imageView);
                     borderlessMap.add(toAdd, location.x, location.y);
                     sa++;
                 }
             }
+            if(flag == 1){
+                this.lRunning.set(1);
+            }
         });
     }
-    public void drawGraph(int day, int sumAliveLifespan){
+    public void drawBorderedGraph(int day, int sumAliveLifespan){
         Platform.runLater(() -> {
+            int flag = 0;
+            if(this.bRunning.intValue() == 1){
+                flag = 1;
+                this.bRunning.set(0);
+            }
             bASeries.getData().add(new XYChart.Data<>(day, this.bMap.animalsAlive));
             bGSeries.getData().add(new XYChart.Data<>(day, this.bMap.grassesAlive));
-
-            lASeries.getData().add(new XYChart.Data<>(day, this.lMap.animalsAlive));
-            lGSeries.getData().add(new XYChart.Data<>(day, this.lMap.grassesAlive));
 
             if(this.bMap.deadCount == 0){
                 bDSeries.getData().add(new XYChart.Data<>(day, 0));
@@ -301,6 +336,20 @@ public class App extends Application{
             else{
                 bAlSeries.getData().add(new XYChart.Data<>(day, sumAliveLifespan/this.bMap.animalsAlive));
             }
+            if(flag == 1){
+                this.bRunning.set(1);
+            }
+        });
+    }
+    public void drawBorderlessGraph(int day, int sumAliveLifespan){
+        Platform.runLater(() -> {
+            int flag = 0;
+            if(this.lRunning.intValue() == 1){
+                flag = 1;
+                this.lRunning.set(0);
+            }
+            lASeries.getData().add(new XYChart.Data<>(day, this.lMap.animalsAlive));
+            lGSeries.getData().add(new XYChart.Data<>(day, this.lMap.grassesAlive));
 
             if(this.lMap.deadCount == 0){
                 lDSeries.getData().add(new XYChart.Data<>(day, 0));
@@ -313,6 +362,9 @@ public class App extends Application{
             }
             else{
                 lAlSeries.getData().add(new XYChart.Data<>(day, sumAliveLifespan/this.lMap.animalsAlive));
+            }
+            if(flag == 1){
+                this.lRunning.set(1);
             }
         });
     }
