@@ -208,10 +208,12 @@ public class SimulationEngine implements Runnable{
     public void bDayPassed(int day){
         this.application.drawBorderedMap();
         this.application.drawBorderedGraph(day, this.sumAliveLifespan);
+        this.application.bUpdateMode(this.map.modeOfGenotypes());
     }
     public void lDayPassed(int day){
         this.application.drawBorderlessMap();
         this.application.drawBorderlessGraph(day, this.sumAliveLifespan);
+        this.application.lUpdateMode(this.map.modeOfGenotypes());
     }
     public int getRandomNumber(int min, int max) {
         return new Random().nextInt(max) + min;

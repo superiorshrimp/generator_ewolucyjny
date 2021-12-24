@@ -1,5 +1,6 @@
 package world;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -105,5 +106,36 @@ public class AbstractWorldMap implements IPositionChangeObserver{
     }
     public void moveBackward(Animal animal){
         //must be overwritten
+    }
+    public ArrayList<Integer> modeOfGenotypes(){
+        ArrayList res = new ArrayList(8);
+        if(this.animalList.size() == 1){
+            return this.animalList.get(0).getGenotype();
+        }
+        res.add(-2);
+        int maksimum = 0;
+        for(int i = 0; i<this.animalList.size()-1; i++){
+            int counter = 0;
+            for(int j = i+1; j<this.animalList.size(); j++){
+                if(this.animalList.get(i).sumOfGenotype == this.animalList.get(j).sumOfGenotype){
+                    int flag = 0;
+                    for(int k = 0; k<8; k++){
+                        if(this.animalList.get(i).mapOfGenotype.get(k) != this.animalList.get(j).mapOfGenotype.get(k)){
+                            flag = 1;
+                            break;
+                        }
+                    }
+                    if(flag == 0){
+                        counter++;
+                        if(counter>maksimum){
+                            res = this.animalList.get(i).getGenotype();
+                            maksimum = counter;
+                        }
+                    }
+                }
+            }
+        }
+        System.out.println(maksimum);
+        return res;
     }
 }

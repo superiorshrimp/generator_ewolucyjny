@@ -69,6 +69,9 @@ public class App extends Application{
 
     public AtomicInteger bRunning = new AtomicInteger(0);
     public AtomicInteger lRunning = new AtomicInteger(0);
+
+    public Text bGenotypeMode = new Text("");
+    public Text lGenotypeMode = new Text("");
     public void init(){
         String[] args = getParameters().getRaw().toArray(new String[0]);
         String filePath = args[0];
@@ -221,7 +224,7 @@ public class App extends Application{
                 bResume,
                 lStop,
                 lResume);
-        Scene scene = new Scene(new VBox(new HBox(chosenParams, borderedMap, borderlessMap), new HBox(bAGChart, lAGChart, bLDChart, lLDChart)), 1600, 900);
+        Scene scene = new Scene(new VBox(new HBox(chosenParams, borderedMap, borderlessMap), new HBox(bAGChart, lAGChart, bLDChart, lLDChart), new HBox(new Text("bordered map mode of genotype: "), this.bGenotypeMode, new Text("borderless map mode of genotype: "), this.lGenotypeMode)), 1600, 900);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
@@ -367,6 +370,32 @@ public class App extends Application{
                 this.lRunning.set(1);
             }
         });
+    }
+    public void bUpdateMode(ArrayList<Integer> mode){
+        String res = "";
+        if(mode.get(0) == -2){
+            this.bGenotypeMode.setText(res);
+        }
+        else{
+            for(Integer el : mode){
+                res += Integer.toString(el);
+                res += ";";
+            }
+            this.bGenotypeMode.setText(res);
+        }
+    }
+    public void lUpdateMode(ArrayList<Integer> mode){
+        String res = "";
+        if(mode.get(0) == -2){
+            this.lGenotypeMode.setText(res);
+        }
+        else{
+            for(Integer el : mode){
+                res += Integer.toString(el);
+                res += ";";
+            }
+            this.lGenotypeMode.setText(res);
+        }
     }
     public int getRandomNumber(int min, int max) {
         return new Random().nextInt(max) + min;

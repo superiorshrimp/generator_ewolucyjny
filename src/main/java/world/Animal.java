@@ -11,10 +11,17 @@ public class Animal implements IPositionChangeObserver{
     private Vector2d position;
     public ArrayList<IPositionChangeObserver> observers;
     public int dayOfBirth;
+    public int sumOfGenotype;
+    public ArrayList <Integer> mapOfGenotype;
     public Animal(Vector2d location, int energy){
         this.position = location;
         this.observers = new ArrayList<>();
         this.energy = energy;
+        this.dayOfBirth = 0;
+        this.mapOfGenotype = new ArrayList<>(8);
+        for(int i = 0; i<8; i++){
+            this.mapOfGenotype.add(-1);
+        }
         this.genotype = createRandomGenotype();
         this.facing = getRandomNumber(0,8);
         this.dayOfBirth = 0;
@@ -23,6 +30,11 @@ public class Animal implements IPositionChangeObserver{
         this.position = location;
         this.observers = new ArrayList<>();
         this.energy = energy;
+        this.dayOfBirth = 0;
+        this.mapOfGenotype = new ArrayList<>(8);
+        for(int i = 0; i<8; i++){
+            this.mapOfGenotype.add(-1);
+        }
         this.genotype = createGenotype(genotype1, genotype2, energy1, energy2);
         this.facing = getRandomNumber(0,8);
         this.dayOfBirth = day;
@@ -63,18 +75,22 @@ public class Animal implements IPositionChangeObserver{
                 div = (int) (32 * ((double) energy1/(double) sum));
                 for(int i = 0; i<div; i++){
                     ret.add(genotype1.get(i));
+                    this.sumOfGenotype += genotype1.get(i);
                 }
                 for(int i = div; i<32; i++){
                     ret.add(genotype2.get(i));
+                    this.sumOfGenotype += genotype2.get(i);
                 }
             }
             else{
                 div = 32-(int) (32 * ((double) energy1/(double) sum));
                 for(int i = 0; i<div; i++){
                     ret.add(genotype2.get(i));
+                    this.sumOfGenotype += genotype2.get(i);
                 }
                 for(int i = div; i<32; i++){
                     ret.add(genotype1.get(i));
+                    this.sumOfGenotype += genotype1.get(i);
                 }
             }
         }
@@ -83,30 +99,46 @@ public class Animal implements IPositionChangeObserver{
                 div = (int) (32 * ((double) energy2/(double) sum));
                 for(int i = 0; i<div; i++){
                     ret.add(genotype2.get(i));
+                    this.sumOfGenotype += genotype2.get(i);
                 }
                 for(int i = div; i<32; i++){
                     ret.add(genotype1.get(i));
+                    this.sumOfGenotype += genotype1.get(i);
                 }
             }
             else{
                 div = 32-(int) (32 * ((double) energy2/(double) sum));
                 for(int i = 0; i<div; i++){
                     ret.add(genotype1.get(i));
+                    this.sumOfGenotype += genotype1.get(i);
                 }
                 for(int i = div; i<32; i++){
                     ret.add(genotype2.get(i));
+                    this.sumOfGenotype += genotype2.get(i);
                 }
             }
         }
         Collections.sort(ret);
+        for(int gene = 0; gene<32; gene++){
+            if(this.mapOfGenotype.get(ret.get(gene)) == -1){
+                this.mapOfGenotype.add(ret.get(gene), gene);
+            }
+        }
         return ret;
     }
     public ArrayList<Integer> createRandomGenotype(){
         ArrayList<Integer> ret = new ArrayList<>(32);
         for(int i = 0; i<32; i++){
-            ret.add(getRandomNumber(0,8));
+            int rand = getRandomNumber(0,8);
+            ret.add(rand);
+            this.sumOfGenotype += rand;
         }
         Collections.sort(ret);
+        for(int gene = 0; gene<32; gene++){
+            if(this.mapOfGenotype.get(ret.get(gene)) == -1){
+                this.mapOfGenotype.add(ret.get(gene), gene);
+            }
+        }
         return ret;
     }
     public void decreaseEnergy(int moveEnergy){
@@ -131,5 +163,11 @@ public class Animal implements IPositionChangeObserver{
     }
     public void setPosition(Vector2d location){
         this.position = location;
+    }
+    public int getSumOfGenotype(){
+        return this.sumOfGenotype;
+    }
+    public ArrayList <Integer> getMapOfGenotype(){
+        return this.mapOfGenotype;
     }
 }
