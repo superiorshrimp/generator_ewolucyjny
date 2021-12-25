@@ -135,7 +135,6 @@ public class AbstractWorldMap implements IPositionChangeObserver{
                 }
             }
         }
-        System.out.println(maksimum);
         return res;
     }
 }

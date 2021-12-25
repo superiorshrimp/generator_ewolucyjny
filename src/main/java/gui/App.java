@@ -3,22 +3,25 @@ package gui;
 import CSV.CSVReader;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import world.*;
 
-import java.util.ArrayList;
-import java.util.Random;
+import java.util.*;
 
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class App extends Application{
@@ -72,6 +75,19 @@ public class App extends Application{
 
     public Text bGenotypeMode = new Text("");
     public Text lGenotypeMode = new Text("");
+
+    public Animal bTracked;
+    public Animal lTracked;
+
+    public Text bTrackedGenotype = new Text();
+    public Text bTrackedIsAlive = new Text();
+    public Text bChildrenCount = new Text();
+    public Text bDescendantsCount = new Text();
+    public Text lTrackedGenotype = new Text();
+    public Text lTrackedIsAlive = new Text();
+    public Text lChildrenCount = new Text();
+    public Text lDescendantsCount = new Text();
+
     public void init(){
         String[] args = getParameters().getRaw().toArray(new String[0]);
         String filePath = args[0];
@@ -123,6 +139,9 @@ public class App extends Application{
         this.lAlSeries.setName("alive");
         this.lLDChart.getData().add(this.lDSeries);
         this.lLDChart.getData().add(this.lAlSeries);
+
+        this.bTracked = null;
+        this.lTracked = null;
     }
     public void start(Stage primaryStage){
         TextField tfRefresh = new TextField(String.valueOf(this.refresh));
@@ -153,6 +172,14 @@ public class App extends Application{
         Button bResume = new Button("press to resume bordered map");
         Button lStop = new Button("press to stop borderless map");
         Button lResume = new Button("press to resume borderless map");
+
+        ListView<String> bScrollableList = new ListView<String>();
+        ObservableList<String> bScrollableListInfo = FXCollections.observableArrayList("pause to choose animal from bordered map to track");
+        bScrollableList.setItems(bScrollableListInfo);
+        ListView<String> lScrollableList = new ListView<String>();
+        ObservableList<String> lScrollableListInfo = FXCollections.observableArrayList("pause to choose animal from borderless map to track");
+        lScrollableList.setItems(lScrollableListInfo);
+
         start.setOnAction(action -> {
             AbstractWorldMap bMap = new WorldMapBordered(this.width, this.height, this.jungleRatio);
             AbstractWorldMap lMap = new WorldMapBorderless(this.width, this.height, this.jungleRatio);
@@ -203,10 +230,76 @@ public class App extends Application{
             Thread lEngineThread = new Thread(lEngine);
             lEngineThread.start();
         });
-        bStop.setOnAction(act -> {this.bRunning.set(0);});
-        bResume.setOnAction(act -> {this.bRunning.set(1);});
-        lStop.setOnAction(act -> {this.lRunning.set(0);});
-        lResume.setOnAction(act -> {this.lRunning.set(1);});
+        bStop.setOnAction(act -> {
+            this.bRunning.set(0);
+            bScrollableList.getItems().clear();
+            Map<Integer, Animal> temp = new HashMap<>(this.bMap.animalList.size());
+            Set<Vector2d> keys = this.bMap.animals.keySet();
+            int p = 0;
+            for(Vector2d loc : keys){
+                for(Animal animal : this.bMap.animals.get(loc).animals){
+                    temp.put(p, animal);
+                    p++;
+                    bScrollableList.getItems().add(loc + ", energy: " + animal.getEnergy() + ", facing: " + animal.getFacing());
+                }
+            }
+            bScrollableList.setOnMouseClicked(new EventHandler<MouseEvent>() {
+                @Override
+                public void handle(MouseEvent event) {
+                    int p = bScrollableList.getSelectionModel().getSelectedIndex();
+                    bTracked = temp.get(p);
+                    String t = "genotype of tracked animal from bordered map: ";
+                    for(Integer gene : bTracked.getGenotype()){
+                        t += gene.toString();
+                        t += ";";
+                    }
+                    bTrackedGenotype.setText(t);
+                    bTrackedIsAlive.setText("alive, energy: " + temp.get(p).getEnergy());
+                    bChildrenCount.setText("children: 0");
+                    bDescendantsCount.setText("descendants: 0");
+                }
+            });
+        });
+        bResume.setOnAction(act -> {
+            this.bRunning.set(1);
+            bScrollableList.getItems().clear();
+            bScrollableList.getItems().add("pause to choose animal from bordered map to track");
+        });
+        lStop.setOnAction(act -> {
+            this.lRunning.set(0);
+            lScrollableList.getItems().clear();
+            Map<Integer, Animal> temp = new HashMap<>(this.lMap.animalList.size());
+            Set<Vector2d> keys = this.lMap.animals.keySet();
+            int p = 0;
+            for(Vector2d loc : keys){
+                for(Animal animal : this.lMap.animals.get(loc).animals){
+                    temp.put(p, animal);
+                    p++;
+                    lScrollableList.getItems().add(loc + ", energy: " + animal.getEnergy() + ", facing: " + animal.getFacing());
+                }
+            }
+            lScrollableList.setOnMouseClicked(new EventHandler<MouseEvent>() {
+                @Override
+                public void handle(MouseEvent event) {
+                    int p = lScrollableList.getSelectionModel().getSelectedIndex();
+                    lTracked = temp.get(p);
+                    String t = "genotype of tracked animal from borderless map: ";
+                    for(Integer gene : lTracked.getGenotype()){
+                        t += gene.toString();
+                        t += ";";
+                    }
+                    lTrackedGenotype.setText(t);
+                    lTrackedIsAlive.setText("alive, energy: " + temp.get(p).getEnergy());
+                    lChildrenCount.setText("children: 0");
+                    lDescendantsCount.setText("descendants: 0");
+                }
+            });
+        });
+        lResume.setOnAction(act -> {
+            this.lRunning.set(1);
+            lScrollableList.getItems().clear();
+            lScrollableList.getItems().add("pause to choose animal from borderless map to track");
+        });
         VBox chosenParams = new VBox(new Text("Current parameters:"),
                 new HBox(new Text("refresh rate: "), tfRefresh),
                 new HBox(new Text("width: "), tfWidth),
@@ -224,7 +317,7 @@ public class App extends Application{
                 bResume,
                 lStop,
                 lResume);
-        Scene scene = new Scene(new VBox(new HBox(chosenParams, borderedMap, borderlessMap), new HBox(bAGChart, lAGChart, bLDChart, lLDChart), new HBox(new Text("bordered map mode of genotype: "), this.bGenotypeMode, new Text("borderless map mode of genotype: "), this.lGenotypeMode)), 1600, 900);
+        Scene scene = new Scene(new VBox(new HBox(chosenParams, borderedMap, borderlessMap), new HBox(bAGChart, lAGChart, bLDChart, lLDChart), new HBox(new Text("bordered map mode of genotype: "), this.bGenotypeMode, new Text("borderless map mode of genotype: "), this.lGenotypeMode), new HBox(bScrollableList, lScrollableList, new VBox(bTrackedGenotype, bTrackedIsAlive, bChildrenCount, bDescendantsCount), new VBox(lTrackedGenotype, lTrackedIsAlive, lChildrenCount, lDescendantsCount)) ), 1600, 900);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
@@ -373,7 +466,11 @@ public class App extends Application{
     }
     public void bUpdateMode(ArrayList<Integer> mode){
         String res = "";
+        if(this.bMap.animalList.size()==0){
+            res = "there are no animals on the map ";
+        }
         if(mode.get(0) == -2){
+            res = "there is no dominant genotype ";
             this.bGenotypeMode.setText(res);
         }
         else{
@@ -386,7 +483,11 @@ public class App extends Application{
     }
     public void lUpdateMode(ArrayList<Integer> mode){
         String res = "";
+        if(this.bMap.animalList.size()==0){
+            res = "there are no animals on the map ";
+        }
         if(mode.get(0) == -2){
+            res = "there is no dominant genotype ";
             this.lGenotypeMode.setText(res);
         }
         else{
@@ -395,6 +496,22 @@ public class App extends Application{
                 res += ";";
             }
             this.lGenotypeMode.setText(res);
+        }
+    }
+    public void bUpdateTracked(){
+        if(this.bTracked.getEnergy() - this.moveEnergy > 0){
+            this.bTrackedIsAlive.setText("alive, energy: " + this.bTracked.getEnergy());
+        }
+        else{
+            bTrackedIsAlive.setText("dead :(");
+        }
+    }
+    public void lUpdateTracked(){
+        if(this.lTracked.getEnergy() - this.moveEnergy > 0){
+            this.lTrackedIsAlive.setText("alive, energy: " + this.lTracked.getEnergy());
+        }
+        else{
+            lTrackedIsAlive.setText("dead :(");
         }
     }
     public int getRandomNumber(int min, int max) {
