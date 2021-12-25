@@ -20,6 +20,9 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import world.*;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.*;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -88,6 +91,23 @@ public class App extends Application{
     public Text lChildrenCount = new Text();
     public Text lDescendantsCount = new Text();
 
+    public PrintWriter bReport;
+    {
+        try {
+            bReport = new PrintWriter(new File("bordered_map_report.csv"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    public PrintWriter lReport;
+    {
+        try {
+            lReport = new PrintWriter(new File("borderless_map_report.csv"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void init(){
         String[] args = getParameters().getRaw().toArray(new String[0]);
         String filePath = args[0];
@@ -142,6 +162,8 @@ public class App extends Application{
 
         this.bTracked = null;
         this.lTracked = null;
+
+
     }
     public void start(Stage primaryStage){
         TextField tfRefresh = new TextField(String.valueOf(this.refresh));
@@ -412,56 +434,74 @@ public class App extends Application{
     }
     public void drawBorderedGraph(int day, int sumAliveLifespan){
         Platform.runLater(() -> {
+            StringBuilder sb = new StringBuilder();
             int flag = 0;
             if(this.bRunning.intValue() == 1){
                 flag = 1;
                 this.bRunning.set(0);
             }
+            sb.append(this.bMap.animalsAlive).append(',');
+            sb.append(this.bMap.grassesAlive).append(',');
             bASeries.getData().add(new XYChart.Data<>(day, this.bMap.animalsAlive));
             bGSeries.getData().add(new XYChart.Data<>(day, this.bMap.grassesAlive));
 
             if(this.bMap.deadCount == 0){
                 bDSeries.getData().add(new XYChart.Data<>(day, 0));
+                sb.append(0).append(',');
             }
             else{
                 bDSeries.getData().add(new XYChart.Data<>(day, this.bMap.sumDeadLifespan/this.bMap.deadCount));
+                sb.append(this.bMap.sumDeadLifespan / this.bMap.deadCount).append(',');
             }
             if(this.bMap.animalsAlive == 0){
                 bAlSeries.getData().add(new XYChart.Data<>(day, 0));
+                sb.append(0).append(',');
             }
             else{
                 bAlSeries.getData().add(new XYChart.Data<>(day, sumAliveLifespan/this.bMap.animalsAlive));
+                sb.append(sumAliveLifespan / this.bMap.animalsAlive).append('\n');
             }
             if(flag == 1){
                 this.bRunning.set(1);
             }
+            this.bReport.write(sb.toString());
+            this.bReport.close();
         });
     }
     public void drawBorderlessGraph(int day, int sumAliveLifespan){
         Platform.runLater(() -> {
+            StringBuilder sb = new StringBuilder();
             int flag = 0;
             if(this.lRunning.intValue() == 1){
                 flag = 1;
                 this.lRunning.set(0);
             }
+            sb.append(this.lMap.animalsAlive).append(',');
+            sb.append(this.lMap.grassesAlive).append(',');
             lASeries.getData().add(new XYChart.Data<>(day, this.lMap.animalsAlive));
             lGSeries.getData().add(new XYChart.Data<>(day, this.lMap.grassesAlive));
 
             if(this.lMap.deadCount == 0){
                 lDSeries.getData().add(new XYChart.Data<>(day, 0));
+                sb.append(0).append(',');
             }
             else{
                 lDSeries.getData().add(new XYChart.Data<>(day, this.lMap.sumDeadLifespan/this.lMap.deadCount));
+                sb.append(this.lMap.sumDeadLifespan / this.lMap.deadCount).append(',');
             }
             if(this.lMap.animalsAlive == 0){
                 lAlSeries.getData().add(new XYChart.Data<>(day, 0));
+                sb.append(0).append(',');
             }
             else{
                 lAlSeries.getData().add(new XYChart.Data<>(day, sumAliveLifespan/this.lMap.animalsAlive));
+                sb.append(String.valueOf(sumAliveLifespan / this.lMap.animalsAlive)).append('\n');
             }
             if(flag == 1){
                 this.lRunning.set(1);
             }
+            this.lReport.write(sb.toString());
+            this.lReport.close();
         });
     }
     public void bUpdateMode(ArrayList<Integer> mode){
