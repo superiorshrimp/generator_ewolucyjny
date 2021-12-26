@@ -29,7 +29,7 @@ public class MagicSimulationEngine implements Runnable{
     public int children = 0;
     public int descendants = 0;
     public Animal lastTracked = null;
-    public int magicTricksCount = 0;
+    public int magicTricksCount = 3;
     public MagicSimulationEngine(AbstractWorldMap map, int refresh, int width, int height, int days, int startEnergy, int moveEnergy, int plantEnergy, int spawnGrass, App application, AtomicInteger running, Animal lastTracked){
         this.map = map;
         this.refresh = refresh;
@@ -67,6 +67,7 @@ public class MagicSimulationEngine implements Runnable{
                 }
             }
             this.sumAliveLifespan = 0;
+            aLilBitOfMagic(day);
             removeDeadAnimals(map, day);
             moveAnimals(map);
             eat(map);
@@ -85,10 +86,31 @@ public class MagicSimulationEngine implements Runnable{
             }
         }
     }
-    public void aLilBitOfMagic(){
-        if(this.map.animalList.size()<=5){
+    public void aLilBitOfMagic(int day){
+        if(this.map.animalList.size()==5 && this.magicTricksCount>0){
+            if(this.map instanceof WorldMapBordered) {
+                System.out.println("poof! there are new animals on the bordered map!");
+            }
+            else{
+                System.out.println("poof! there are new animals on the borderless map!");
+            }
             this.magicTricksCount--;
-            
+            for(int i = 0; i<5; i++){
+                Vector2d location = new Vector2d(getRandomNumber(0, this.width), getRandomNumber(0, this.height));
+                while(this.map.isOccupied(location)){
+                    location = new Vector2d(getRandomNumber(0, this.width), getRandomNumber(0, this.height));
+                }
+                Animal toCopy = this.map.animalList.get(i);
+                Animal toAdd = new Animal(location, this.startEnergy, toCopy.getGenotype(), toCopy.getGenotype(), this.startEnergy/2+this.startEnergy%2, this.startEnergy/2, day, toCopy.isDescendant);
+                toAdd.addObserver(map);
+                this.map.addAnimal(toAdd);
+                this.map.animalsAlive++;
+                if(this.map.grasses.containsKey(location)){
+                    this.map.grasses.remove(location);
+                    this.map.grassesAlive--;
+                }
+                this.map.animals.get(location).updateStrongest();
+            }
         }
     }
     public void removeDeadAnimals(AbstractWorldMap map, int day){

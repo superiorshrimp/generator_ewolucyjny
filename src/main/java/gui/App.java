@@ -311,12 +311,22 @@ public class App extends Application{
             }
             this.bRunning.set(1);
             this.lRunning.set(1);
-            SimulationEngine bEngine = new SimulationEngine(this.bMap, this.refresh, this.width, this.height, this.days, this.startEnergy, this.moveEnergy, this.plantEnergy, this.spawnGrass, this, bRunning, null);
-            Thread bEngineThread = new Thread(bEngine);
-            bEngineThread.start();
-            SimulationEngine lEngine = new SimulationEngine(this.lMap, this.refresh, this.width, this.height, this.days, this.startEnergy, this.moveEnergy, this.plantEnergy, this.spawnGrass, this, lRunning, null);
-            Thread lEngineThread = new Thread(lEngine);
-            lEngineThread.start();
+            if(this.mode!=1) {
+                SimulationEngine bEngine = new SimulationEngine(this.bMap, this.refresh, this.width, this.height, this.days, this.startEnergy, this.moveEnergy, this.plantEnergy, this.spawnGrass, this, bRunning, null);
+                Thread bEngineThread = new Thread(bEngine);
+                bEngineThread.start();
+                SimulationEngine lEngine = new SimulationEngine(this.lMap, this.refresh, this.width, this.height, this.days, this.startEnergy, this.moveEnergy, this.plantEnergy, this.spawnGrass, this, lRunning, null);
+                Thread lEngineThread = new Thread(lEngine);
+                lEngineThread.start();
+            }
+            else{
+                MagicSimulationEngine bMEngine = new MagicSimulationEngine(this.bMap, this.refresh, this.width, this.height, this.days, this.startEnergy, this.moveEnergy, this.plantEnergy, this.spawnGrass, this, bRunning, null);
+                Thread bMEngineThread = new Thread(bMEngine);
+                bMEngineThread.start();
+                MagicSimulationEngine lMEngine = new MagicSimulationEngine(this.lMap, this.refresh, this.width, this.height, this.days, this.startEnergy, this.moveEnergy, this.plantEnergy, this.spawnGrass, this, lRunning, null);
+                Thread lMEngineThread = new Thread(lMEngine);
+                lMEngineThread.start();
+            }
         });
         bStop.setOnAction(act -> {
             this.bRunning.set(0);
