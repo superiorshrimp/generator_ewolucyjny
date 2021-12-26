@@ -8,7 +8,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class SimulationEngine implements Runnable{
+public class MagicSimulationEngine implements Runnable{
     public AbstractWorldMap map;
     public int refresh;
     public int width;
@@ -29,7 +29,8 @@ public class SimulationEngine implements Runnable{
     public int children = 0;
     public int descendants = 0;
     public Animal lastTracked = null;
-    public SimulationEngine(AbstractWorldMap map, int refresh, int width, int height, int days, int startEnergy, int moveEnergy, int plantEnergy, int spawnGrass, App application, AtomicInteger running, Animal lastTracked){
+    public int magicTricksCount = 0;
+    public MagicSimulationEngine(AbstractWorldMap map, int refresh, int width, int height, int days, int startEnergy, int moveEnergy, int plantEnergy, int spawnGrass, App application, AtomicInteger running, Animal lastTracked){
         this.map = map;
         this.refresh = refresh;
         this.width = width;
@@ -82,6 +83,12 @@ public class SimulationEngine implements Runnable{
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+        }
+    }
+    public void aLilBitOfMagic(){
+        if(this.map.animalList.size()<=5){
+            this.magicTricksCount--;
+            
         }
     }
     public void removeDeadAnimals(AbstractWorldMap map, int day){

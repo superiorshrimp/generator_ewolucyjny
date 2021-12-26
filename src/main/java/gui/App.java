@@ -21,6 +21,7 @@ import javafx.stage.Stage;
 import world.*;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
@@ -94,7 +95,7 @@ public class App extends Application{
     public PrintWriter bReport;
     {
         try {
-            bReport = new PrintWriter(new File("bordered_map_report.csv"));
+            bReport = new PrintWriter(new File("bordered_map_report.csv")); //saves everything on last day
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -102,11 +103,24 @@ public class App extends Application{
     public PrintWriter lReport;
     {
         try {
-            lReport = new PrintWriter(new File("borderless_map_report.csv"));
+            lReport = new PrintWriter(new File("borderless_map_report.csv")); //saves everything on last day
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+    public String bState = "";
+    public String lState = "";
+    public double bAvg1 = 0;
+    public double bAvg2 = 0;
+    public double bAvg3 = 0;
+    public double bAvg4 = 0;
+    public double lAvg1 = 0;
+    public double lAvg2 = 0;
+    public double lAvg3 = 0;
+    public double lAvg4 = 0;
+    public int bDay = 0;
+    public int lDay = 0;
 
     public void init(){
         String[] args = getParameters().getRaw().toArray(new String[0]);
@@ -163,7 +177,6 @@ public class App extends Application{
         this.bTracked = null;
         this.lTracked = null;
 
-
     }
     public void start(Stage primaryStage){
         TextField tfRefresh = new TextField(String.valueOf(this.refresh));
@@ -194,6 +207,59 @@ public class App extends Application{
         Button bResume = new Button("press to resume bordered map");
         Button lStop = new Button("press to stop borderless map");
         Button lResume = new Button("press to resume borderless map");
+
+        Button bShowAllModeGenotype = new Button("animals with dominant genotype on bordered map");
+        bShowAllModeGenotype.setOnAction(act -> {
+            if(this.bRunning.intValue() == 0){
+                System.out.println("animals with dominant genotype:");
+                for(Animal animal : bMap.animalList){
+                    if(animal.getGenotype().equals(bMap.modeOfGenotypes())){
+                        System.out.println("b location: " + animal.getPosition() + ", energy: " + animal.getEnergy() + ", facing" + animal.getFacing());
+                    }
+                }
+            }
+        });
+
+        Button lShowAllModeGenotype = new Button("animals with dominant genotype on borderless map");
+        lShowAllModeGenotype.setOnAction(act -> {
+            if(this.lRunning.intValue() == 0){
+                System.out.println("animals with dominant genotype:");
+                for(Animal animal : lMap.animalList){
+                    if(animal.getGenotype().equals(lMap.modeOfGenotypes())){
+                        System.out.println("l location: " + animal.getPosition() + ", energy: " + animal.getEnergy() + ", facing" + animal.getFacing());
+                    }
+                }
+            }
+        });
+
+        Button bSave = new Button("save current stats (bordered)");
+        Button lSave = new Button("save current stats (borderless)");
+
+        bSave.setOnAction(act -> {
+            if(this.bRunning.intValue() == 0){
+                try {
+                    PrintWriter bStateReport = new PrintWriter(new File("bordered_state_report.csv"));
+                    bState += bAvg1/bDay + ',' + bAvg2/bDay + ',' + bAvg3/bDay + ',' + bAvg4/bDay;
+                    bStateReport.write(bState);
+                    bStateReport.close();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        lSave.setOnAction(act -> {
+            if(this.lRunning.intValue() == 0){
+                try {
+                    PrintWriter lStateReport = new PrintWriter(new File("borderless_state_report.csv"));
+                    lState += lAvg1/lDay + ',' + lAvg2/lDay + ',' + lAvg3/lDay + ',' + lAvg4/lDay;
+                    lStateReport.write(lState);
+                    lStateReport.close();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
 
         ListView<String> bScrollableList = new ListView<String>();
         ObservableList<String> bScrollableListInfo = FXCollections.observableArrayList("pause to choose animal from bordered map to track");
@@ -245,10 +311,10 @@ public class App extends Application{
             }
             this.bRunning.set(1);
             this.lRunning.set(1);
-            SimulationEngine bEngine = new SimulationEngine(this.bMap, this.refresh, this.width, this.height, this.days, this.startEnergy, this.moveEnergy, this.plantEnergy, this.spawnGrass, this, bRunning);
+            SimulationEngine bEngine = new SimulationEngine(this.bMap, this.refresh, this.width, this.height, this.days, this.startEnergy, this.moveEnergy, this.plantEnergy, this.spawnGrass, this, bRunning, null);
             Thread bEngineThread = new Thread(bEngine);
             bEngineThread.start();
-            SimulationEngine lEngine = new SimulationEngine(this.lMap, this.refresh, this.width, this.height, this.days, this.startEnergy, this.moveEnergy, this.plantEnergy, this.spawnGrass, this, lRunning);
+            SimulationEngine lEngine = new SimulationEngine(this.lMap, this.refresh, this.width, this.height, this.days, this.startEnergy, this.moveEnergy, this.plantEnergy, this.spawnGrass, this, lRunning, null);
             Thread lEngineThread = new Thread(lEngine);
             lEngineThread.start();
         });
@@ -274,6 +340,9 @@ public class App extends Application{
                     for(Integer gene : bTracked.getGenotype()){
                         t += gene.toString();
                         t += ";";
+                    }
+                    for(Animal animal : bMap.animalList){
+                        animal.isDescendant = false;
                     }
                     bTrackedGenotype.setText(t);
                     bTrackedIsAlive.setText("alive, energy: " + temp.get(p).getEnergy());
@@ -310,6 +379,9 @@ public class App extends Application{
                         t += gene.toString();
                         t += ";";
                     }
+                    for(Animal animal : lMap.animalList){
+                        animal.isDescendant = false;
+                    }
                     lTrackedGenotype.setText(t);
                     lTrackedIsAlive.setText("alive, energy: " + temp.get(p).getEnergy());
                     lChildrenCount.setText("children: 0");
@@ -339,7 +411,7 @@ public class App extends Application{
                 bResume,
                 lStop,
                 lResume);
-        Scene scene = new Scene(new VBox(new HBox(chosenParams, borderedMap, borderlessMap), new HBox(bAGChart, lAGChart, bLDChart, lLDChart), new HBox(new Text("bordered map mode of genotype: "), this.bGenotypeMode, new Text("borderless map mode of genotype: "), this.lGenotypeMode), new HBox(bScrollableList, lScrollableList, new VBox(bTrackedGenotype, bTrackedIsAlive, bChildrenCount, bDescendantsCount), new VBox(lTrackedGenotype, lTrackedIsAlive, lChildrenCount, lDescendantsCount)) ), 1600, 900);
+        Scene scene = new Scene(new VBox(new HBox(chosenParams, borderedMap, borderlessMap), new HBox(bAGChart, lAGChart, bLDChart, lLDChart), new HBox(new Text("bordered map mode of genotype: "), this.bGenotypeMode, new Text("borderless map mode of genotype: "), this.lGenotypeMode), new HBox(bScrollableList, lScrollableList, new VBox(bTrackedGenotype, bTrackedIsAlive, bChildrenCount, bDescendantsCount, bShowAllModeGenotype, bSave), new VBox(lTrackedGenotype, lTrackedIsAlive, lChildrenCount, lDescendantsCount, lShowAllModeGenotype, lSave)) ), 1600, 900);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
@@ -432,9 +504,14 @@ public class App extends Application{
             }
         });
     }
-    public void drawBorderedGraph(int day, int sumAliveLifespan){
+    public void drawBorderedGraph(int day, int sumAliveLifespan, StringBuilder sb, double avg1, double avg2, double avg3, double avg4){
         Platform.runLater(() -> {
-            StringBuilder sb = new StringBuilder();
+            bState = sb.toString();
+            this.bAvg1 = avg1;
+            this.bAvg2 = avg2;
+            this.bAvg3 = avg3;
+            this.bAvg4 = avg4;
+            this.bDay = day;
             int flag = 0;
             if(this.bRunning.intValue() == 1){
                 flag = 1;
@@ -455,22 +532,30 @@ public class App extends Application{
             }
             if(this.bMap.animalsAlive == 0){
                 bAlSeries.getData().add(new XYChart.Data<>(day, 0));
-                sb.append(0).append(',');
+                sb.append(0).append(',').append('\n');
             }
             else{
                 bAlSeries.getData().add(new XYChart.Data<>(day, sumAliveLifespan/this.bMap.animalsAlive));
                 sb.append(sumAliveLifespan / this.bMap.animalsAlive).append('\n');
             }
+            if(day==this.days-1){
+                sb.append(avg1/days).append(',').append(avg2/days).append(',').append(avg3/days).append(',').append(avg4/days);
+                this.bReport.write(sb.toString());
+                this.bReport.close();
+            }
             if(flag == 1){
                 this.bRunning.set(1);
             }
-            this.bReport.write(sb.toString());
-            this.bReport.close();
         });
     }
-    public void drawBorderlessGraph(int day, int sumAliveLifespan){
+    public void drawBorderlessGraph(int day, int sumAliveLifespan, StringBuilder sb, double avg1, double avg2, double avg3, double avg4){
         Platform.runLater(() -> {
-            StringBuilder sb = new StringBuilder();
+            lState = sb.toString();
+            this.lAvg1 = avg1;
+            this.lAvg2 = avg2;
+            this.lAvg3 = avg3;
+            this.lAvg4 = avg4;
+            this.lDay = day;
             int flag = 0;
             if(this.lRunning.intValue() == 1){
                 flag = 1;
@@ -491,17 +576,20 @@ public class App extends Application{
             }
             if(this.lMap.animalsAlive == 0){
                 lAlSeries.getData().add(new XYChart.Data<>(day, 0));
-                sb.append(0).append(',');
+                sb.append(0).append(',').append('\n');
             }
             else{
                 lAlSeries.getData().add(new XYChart.Data<>(day, sumAliveLifespan/this.lMap.animalsAlive));
                 sb.append(String.valueOf(sumAliveLifespan / this.lMap.animalsAlive)).append('\n');
             }
+            if(day==this.days-1){
+                sb.append(avg1/days).append(',').append(avg2/days).append(',').append(avg3/days).append(',').append(avg4/days);
+                this.lReport.write(sb.toString());
+                this.lReport.close();
+            }
             if(flag == 1){
                 this.lRunning.set(1);
             }
-            this.lReport.write(sb.toString());
-            this.lReport.close();
         });
     }
     public void bUpdateMode(ArrayList<Integer> mode){
@@ -538,21 +626,26 @@ public class App extends Application{
             this.lGenotypeMode.setText(res);
         }
     }
-    public void bUpdateTracked(){
+    public void bUpdateTracked(int children, int descendants, int day){
         if(this.bTracked.getEnergy() - this.moveEnergy > 0){
             this.bTrackedIsAlive.setText("alive, energy: " + this.bTracked.getEnergy());
         }
-        else{
-            bTrackedIsAlive.setText("dead :(");
+        else if(bTrackedIsAlive.getText().charAt(0)!='d'){
+            bTrackedIsAlive.setText("dead :( " + String.valueOf(day));
         }
+        bChildrenCount.setText("children: " + String.valueOf(children));
+        bDescendantsCount.setText("descendants: " + String.valueOf(descendants));
+
     }
-    public void lUpdateTracked(){
+    public void lUpdateTracked(int children, int descendants, int day){
         if(this.lTracked.getEnergy() - this.moveEnergy > 0){
             this.lTrackedIsAlive.setText("alive, energy: " + this.lTracked.getEnergy());
         }
-        else{
-            lTrackedIsAlive.setText("dead :(");
+        else if(lTrackedIsAlive.getText().charAt(0)!='d'){
+            lTrackedIsAlive.setText("dead :( " + String.valueOf(day));
         }
+        lChildrenCount.setText("children: " + String.valueOf(children));
+        lDescendantsCount.setText("descendants: " + String.valueOf(descendants));
     }
     public int getRandomNumber(int min, int max) {
         return new Random().nextInt(max) + min;

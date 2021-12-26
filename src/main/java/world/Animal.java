@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Random;
 
 public class Animal implements IPositionChangeObserver{
+    public boolean isDescendant;
     private int energy;
     private final ArrayList<Integer> genotype;
     private int facing;
@@ -25,8 +26,9 @@ public class Animal implements IPositionChangeObserver{
         this.genotype = createRandomGenotype();
         this.facing = getRandomNumber(0,8);
         this.dayOfBirth = 0;
+        this.isDescendant = false;
     }
-    public Animal(Vector2d location, int energy, ArrayList<Integer> genotype1, ArrayList<Integer> genotype2, int energy1, int energy2, int day){
+    public Animal(Vector2d location, int energy, ArrayList<Integer> genotype1, ArrayList<Integer> genotype2, int energy1, int energy2, int day, boolean desc){
         this.position = location;
         this.observers = new ArrayList<>();
         this.energy = energy;
@@ -38,6 +40,7 @@ public class Animal implements IPositionChangeObserver{
         this.genotype = createGenotype(genotype1, genotype2, energy1, energy2);
         this.facing = getRandomNumber(0,8);
         this.dayOfBirth = day;
+        this.isDescendant = desc;
     }
     public void increaseEnergy(int plantEnergy){
         this.energy += plantEnergy;
