@@ -14,6 +14,8 @@ public class Animal implements IPositionChangeObserver{
     public int dayOfBirth;
     public int sumOfGenotype;
     public ArrayList <Integer> mapOfGenotype;
+    public Animal parent1;
+    public Animal parent2;
     public Animal(Vector2d location, int energy){
         this.position = location;
         this.observers = new ArrayList<>();
@@ -27,8 +29,10 @@ public class Animal implements IPositionChangeObserver{
         this.facing = getRandomNumber(0,8);
         this.dayOfBirth = 0;
         this.isDescendant = false;
+        this.parent1 = null;
+        this.parent2 = null;
     }
-    public Animal(Vector2d location, int energy, ArrayList<Integer> genotype1, ArrayList<Integer> genotype2, int energy1, int energy2, int day, boolean desc){
+    public Animal(Vector2d location, int energy, ArrayList<Integer> genotype1, ArrayList<Integer> genotype2, int energy1, int energy2, int day, boolean desc, Animal parent1, Animal parent2){
         this.position = location;
         this.observers = new ArrayList<>();
         this.energy = energy;
@@ -41,6 +45,8 @@ public class Animal implements IPositionChangeObserver{
         this.facing = getRandomNumber(0,8);
         this.dayOfBirth = day;
         this.isDescendant = desc;
+        this.parent1 = parent1;
+        this.parent2 = parent2;
     }
     public void increaseEnergy(int plantEnergy){
         this.energy += plantEnergy;
@@ -172,5 +178,8 @@ public class Animal implements IPositionChangeObserver{
     }
     public ArrayList <Integer> getMapOfGenotype(){
         return this.mapOfGenotype;
+    }
+    public boolean isAlive(){
+        return this.getEnergy()>=0;
     }
 }

@@ -1,7 +1,5 @@
 package world;
 
-import java.util.Set;
-
 public class WorldMapBordered extends AbstractWorldMap{
     public WorldMapBordered(int width, int height, double jungleRatio){
         super(width, height, jungleRatio);

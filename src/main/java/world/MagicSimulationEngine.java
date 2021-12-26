@@ -26,6 +26,7 @@ public class MagicSimulationEngine implements Runnable{
     public double avg2 = 0;
     public double avg3 = 0;
     public double avg4 = 0;
+    public double avg5 = 0;
     public int children = 0;
     public int descendants = 0;
     public Animal lastTracked = null;
@@ -45,7 +46,7 @@ public class MagicSimulationEngine implements Runnable{
         this.sumAliveLifespan = 0;
         this.running = running;
         this.sb = new StringBuilder();
-        sb.append("animals alive,grasses alive,average lifespan of dead animals,average lifespan of alive animals\n");
+        sb.append("animals alive,grasses alive,average lifespan of dead animals,average lifespan of alive animals,average count of children for living animals\n");
     }
     public void run(){
         for(int day = 0; day < this.days; day++){
@@ -74,10 +75,10 @@ public class MagicSimulationEngine implements Runnable{
             spawnNewAnimals(map, day);
             plantGrass(map);
             if(this.map instanceof WorldMapBordered){
-                bDayPassed(day);
+                bDayPassed(day, this.map.avgChildren());
             }
             else{
-                lDayPassed(day);
+                lDayPassed(day, this.map.avgChildren());
             }
             try {
                 Thread.sleep(this.refresh);
@@ -101,7 +102,7 @@ public class MagicSimulationEngine implements Runnable{
                     location = new Vector2d(getRandomNumber(0, this.width), getRandomNumber(0, this.height));
                 }
                 Animal toCopy = this.map.animalList.get(i);
-                Animal toAdd = new Animal(location, this.startEnergy, toCopy.getGenotype(), toCopy.getGenotype(), this.startEnergy/2+this.startEnergy%2, this.startEnergy/2, day, toCopy.isDescendant);
+                Animal toAdd = new Animal(location, this.startEnergy, toCopy.getGenotype(), toCopy.getGenotype(), this.startEnergy/2+this.startEnergy%2, this.startEnergy/2, day, toCopy.isDescendant, null, null);
                 toAdd.addObserver(map);
                 this.map.addAnimal(toAdd);
                 this.map.animalsAlive++;
@@ -193,16 +194,16 @@ public class MagicSimulationEngine implements Runnable{
                 if(a0.getEnergy() >= this.startEnergy/2 && a1.getEnergy() >= this.startEnergy/2){
                     Animal baby;
                     if(a0 == this.application.bTracked || a1 == this.application.bTracked || a0 == this.application.lTracked || a1 == this.application.lTracked){
-                        baby = new Animal(location, (a0.getEnergy() + a1.getEnergy())/4, a0.getGenotype(), a1.getGenotype(), a0.getEnergy(), a1.getEnergy(), day, true);
+                        baby = new Animal(location, (a0.getEnergy() + a1.getEnergy())/4, a0.getGenotype(), a1.getGenotype(), a0.getEnergy(), a1.getEnergy(), day, true, a0, a1);
                         this.children++;
                         this.descendants++;
                     }
                     else if(a0.isDescendant || a1.isDescendant){
-                        baby = new Animal(location, (a0.getEnergy() + a1.getEnergy())/4, a0.getGenotype(), a1.getGenotype(), a0.getEnergy(), a1.getEnergy(), day, true);
+                        baby = new Animal(location, (a0.getEnergy() + a1.getEnergy())/4, a0.getGenotype(), a1.getGenotype(), a0.getEnergy(), a1.getEnergy(), day, true, a0, a1);
                         this.descendants++;
                     }
                     else{
-                        baby = new Animal(location, (a0.getEnergy() + a1.getEnergy())/4, a0.getGenotype(), a1.getGenotype(), a0.getEnergy(), a1.getEnergy(), day, false);
+                        baby = new Animal(location, (a0.getEnergy() + a1.getEnergy())/4, a0.getGenotype(), a1.getGenotype(), a0.getEnergy(), a1.getEnergy(), day, false, a0, a1);
                     }
                     a0.decreaseEnergy(a0.getEnergy()/4); //not too clean, but works
                     a1.decreaseEnergy(a1.getEnergy()/4);
@@ -266,7 +267,7 @@ public class MagicSimulationEngine implements Runnable{
             }
         }
     }
-    public void bDayPassed(int day){
+    public void bDayPassed(int day, double val){
         if(this.application.bTracked!=null){
             this.application.bUpdateTracked(this.children, this.descendants, day);
         }
@@ -280,9 +281,10 @@ public class MagicSimulationEngine implements Runnable{
         if(this.map.animalsAlive != 0) {
             this.avg4 += sumAliveLifespan/this.map.animalsAlive;
         }
-        this.application.drawBorderedGraph(day, this.sumAliveLifespan, this.sb, this.avg1, this.avg2, this.avg3, this.avg4);
+        this.avg5 += avg5;
+        this.application.drawBorderedGraph(day, this.sumAliveLifespan, this.sb, this.avg1, this.avg2, this.avg3, this.avg4, this.avg5, val);
     }
-    public void lDayPassed(int day){
+    public void lDayPassed(int day, double val){
         if(this.application.lTracked!=null){
             this.application.lUpdateTracked(this.children, this.descendants, day);
         }
@@ -296,7 +298,8 @@ public class MagicSimulationEngine implements Runnable{
         if(this.map.animalsAlive != 0) {
             this.avg4 += sumAliveLifespan/this.map.animalsAlive;
         }
-        this.application.drawBorderlessGraph(day, this.sumAliveLifespan, this.sb, this.avg1, this.avg2, this.avg3, this.avg4);
+        this.avg5 += avg5;
+        this.application.drawBorderlessGraph(day, this.sumAliveLifespan, this.sb, this.avg1, this.avg2, this.avg3, this.avg4, this.avg5, val);
     }
     public int getRandomNumber(int min, int max) {
         return new Random().nextInt(max) + min;

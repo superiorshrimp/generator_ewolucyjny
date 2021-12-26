@@ -83,6 +83,9 @@ public class App extends Application{
     public Animal bTracked;
     public Animal lTracked;
 
+    public XYChart.Series<Number, Number> bACSeries = new XYChart.Series<>();
+    public XYChart.Series<Number, Number> lACSeries = new XYChart.Series<>();
+
     public Text bTrackedGenotype = new Text();
     public Text bTrackedIsAlive = new Text();
     public Text bChildrenCount = new Text();
@@ -115,10 +118,12 @@ public class App extends Application{
     public double bAvg2 = 0;
     public double bAvg3 = 0;
     public double bAvg4 = 0;
+    public double bAvg5 = 0;
     public double lAvg1 = 0;
     public double lAvg2 = 0;
     public double lAvg3 = 0;
     public double lAvg4 = 0;
+    public double lAvg5 = 0;
     public int bDay = 0;
     public int lDay = 0;
 
@@ -147,32 +152,36 @@ public class App extends Application{
         this.weakAnimalImages = new ArrayList<>(2*(1+width)*(1+height));
         this.grassImages = new ArrayList<>(2*(1+width)*(1+height));
         this.bAGxAx.setLabel("day");
-        this.bAGyAx.setLabel("count");
+        this.bAGyAx.setLabel("count (bordered)");
         this.bASeries.setName("animals");
         this.bGSeries.setName("grasses");
         this.bAGChart.getData().add(this.bASeries);
         this.bAGChart.getData().add(this.bGSeries);
 
         this.lAGxAx.setLabel("day");
-        this.lAGyAx.setLabel("count");
+        this.lAGyAx.setLabel("count (borderless)");
         this.lASeries.setName("animals");
         this.lGSeries.setName("grasses");
         this.lAGChart.getData().add(this.lASeries);
         this.lAGChart.getData().add(this.lGSeries);
 
         this.bLDxAx.setLabel("day");
-        this.bLDyAx.setLabel("average lifespan of animals");
-        this.bDSeries.setName("dead");
-        this.bAlSeries.setName("alive");
+        this.bLDyAx.setLabel("value (bordered)");
+        this.bACSeries.setName("average amount of children");
+        this.bDSeries.setName("average lifespan of dead animals");
+        this.bAlSeries.setName("average lifespan of alive animals");
         this.bLDChart.getData().add(this.bDSeries);
         this.bLDChart.getData().add(this.bAlSeries);
+        this.bLDChart.getData().add(this.bACSeries);
 
         this.lLDxAx.setLabel("day");
-        this.lLDyAx.setLabel("average lifespan of animals");
-        this.lDSeries.setName("dead");
-        this.lAlSeries.setName("alive");
+        this.lLDyAx.setLabel("value (borderless)");
+        this.lACSeries.setName("average amount of children");
+        this.lDSeries.setName("average lifespan of dead animals");
+        this.lAlSeries.setName("average lifespan of alive animals");
         this.lLDChart.getData().add(this.lDSeries);
         this.lLDChart.getData().add(this.lAlSeries);
+        this.lLDChart.getData().add(this.lACSeries);
 
         this.bTracked = null;
         this.lTracked = null;
@@ -214,7 +223,7 @@ public class App extends Application{
                 System.out.println("animals with dominant genotype:");
                 for(Animal animal : bMap.animalList){
                     if(animal.getGenotype().equals(bMap.modeOfGenotypes())){
-                        System.out.println("b location: " + animal.getPosition() + ", energy: " + animal.getEnergy() + ", facing" + animal.getFacing());
+                        System.out.println("b location: " + animal.getPosition() + ", energy: " + animal.getEnergy() + ", facing: " + animal.getFacing());
                     }
                 }
             }
@@ -226,7 +235,7 @@ public class App extends Application{
                 System.out.println("animals with dominant genotype:");
                 for(Animal animal : lMap.animalList){
                     if(animal.getGenotype().equals(lMap.modeOfGenotypes())){
-                        System.out.println("l location: " + animal.getPosition() + ", energy: " + animal.getEnergy() + ", facing" + animal.getFacing());
+                        System.out.println("l location: " + animal.getPosition() + ", energy: " + animal.getEnergy() + ", facing: " + animal.getFacing());
                     }
                 }
             }
@@ -239,7 +248,7 @@ public class App extends Application{
             if(this.bRunning.intValue() == 0){
                 try {
                     PrintWriter bStateReport = new PrintWriter(new File("bordered_state_report.csv"));
-                    bState += bAvg1/bDay + ',' + bAvg2/bDay + ',' + bAvg3/bDay + ',' + bAvg4/bDay;
+                    bState += String.valueOf(bAvg1/bDay) + ',' + String.valueOf(bAvg2/bDay) + ',' + String.valueOf(bAvg3/bDay) + ',' + String.valueOf(bAvg4/bDay) + ',' + String.valueOf(bAvg5/lDay);
                     bStateReport.write(bState);
                     bStateReport.close();
                 } catch (FileNotFoundException e) {
@@ -252,7 +261,7 @@ public class App extends Application{
             if(this.lRunning.intValue() == 0){
                 try {
                     PrintWriter lStateReport = new PrintWriter(new File("borderless_state_report.csv"));
-                    lState += lAvg1/lDay + ',' + lAvg2/lDay + ',' + lAvg3/lDay + ',' + lAvg4/lDay;
+                    lState += String.valueOf(lAvg1/lDay) + ',' + String.valueOf(lAvg2/lDay) + ',' + String.valueOf(lAvg3/lDay) + ',' + String.valueOf(lAvg4/lDay) + ',' + String.valueOf(lAvg5/lDay);
                     lStateReport.write(lState);
                     lStateReport.close();
                 } catch (FileNotFoundException e) {
@@ -514,13 +523,14 @@ public class App extends Application{
             }
         });
     }
-    public void drawBorderedGraph(int day, int sumAliveLifespan, StringBuilder sb, double avg1, double avg2, double avg3, double avg4){
+    public void drawBorderedGraph(int day, int sumAliveLifespan, StringBuilder sb, double avg1, double avg2, double avg3, double avg4, double avg5, double val){
         Platform.runLater(() -> {
             bState = sb.toString();
             this.bAvg1 = avg1;
             this.bAvg2 = avg2;
             this.bAvg3 = avg3;
             this.bAvg4 = avg4;
+            this.bAvg5 = avg5;
             this.bDay = day;
             int flag = 0;
             if(this.bRunning.intValue() == 1){
@@ -531,6 +541,7 @@ public class App extends Application{
             sb.append(this.bMap.grassesAlive).append(',');
             bASeries.getData().add(new XYChart.Data<>(day, this.bMap.animalsAlive));
             bGSeries.getData().add(new XYChart.Data<>(day, this.bMap.grassesAlive));
+            bACSeries.getData().add(new XYChart.Data<>(day, val));
 
             if(this.bMap.deadCount == 0){
                 bDSeries.getData().add(new XYChart.Data<>(day, 0));
@@ -542,14 +553,15 @@ public class App extends Application{
             }
             if(this.bMap.animalsAlive == 0){
                 bAlSeries.getData().add(new XYChart.Data<>(day, 0));
-                sb.append(0).append(',').append('\n');
+                sb.append(0).append(',');
             }
             else{
                 bAlSeries.getData().add(new XYChart.Data<>(day, sumAliveLifespan/this.bMap.animalsAlive));
-                sb.append(sumAliveLifespan / this.bMap.animalsAlive).append('\n');
+                sb.append(sumAliveLifespan / this.bMap.animalsAlive).append(',');
             }
+            sb.append(val).append('\n');
             if(day==this.days-1){
-                sb.append(avg1/days).append(',').append(avg2/days).append(',').append(avg3/days).append(',').append(avg4/days);
+                sb.append(avg1/days).append(',').append(avg2/days).append(',').append(avg3/days).append(',').append(avg4/days).append(',').append(avg5/days);
                 this.bReport.write(sb.toString());
                 this.bReport.close();
             }
@@ -558,13 +570,14 @@ public class App extends Application{
             }
         });
     }
-    public void drawBorderlessGraph(int day, int sumAliveLifespan, StringBuilder sb, double avg1, double avg2, double avg3, double avg4){
+    public void drawBorderlessGraph(int day, int sumAliveLifespan, StringBuilder sb, double avg1, double avg2, double avg3, double avg4, double avg5, double val){
         Platform.runLater(() -> {
             lState = sb.toString();
             this.lAvg1 = avg1;
             this.lAvg2 = avg2;
             this.lAvg3 = avg3;
             this.lAvg4 = avg4;
+            this.lAvg5 = avg5;
             this.lDay = day;
             int flag = 0;
             if(this.lRunning.intValue() == 1){
@@ -575,6 +588,7 @@ public class App extends Application{
             sb.append(this.lMap.grassesAlive).append(',');
             lASeries.getData().add(new XYChart.Data<>(day, this.lMap.animalsAlive));
             lGSeries.getData().add(new XYChart.Data<>(day, this.lMap.grassesAlive));
+            lACSeries.getData().add(new XYChart.Data<>(day, val));
 
             if(this.lMap.deadCount == 0){
                 lDSeries.getData().add(new XYChart.Data<>(day, 0));
@@ -586,14 +600,15 @@ public class App extends Application{
             }
             if(this.lMap.animalsAlive == 0){
                 lAlSeries.getData().add(new XYChart.Data<>(day, 0));
-                sb.append(0).append(',').append('\n');
+                sb.append(0).append(',');
             }
             else{
                 lAlSeries.getData().add(new XYChart.Data<>(day, sumAliveLifespan/this.lMap.animalsAlive));
-                sb.append(String.valueOf(sumAliveLifespan / this.lMap.animalsAlive)).append('\n');
+                sb.append(String.valueOf(sumAliveLifespan / this.lMap.animalsAlive)).append(',');
             }
+            sb.append(val).append('\n');
             if(day==this.days-1){
-                sb.append(avg1/days).append(',').append(avg2/days).append(',').append(avg3/days).append(',').append(avg4/days);
+                sb.append(avg1/days).append(',').append(avg2/days).append(',').append(avg3/days).append(',').append(avg4/days).append(',').append(avg5/days);
                 this.lReport.write(sb.toString());
                 this.lReport.close();
             }

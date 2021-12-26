@@ -137,4 +137,19 @@ public class AbstractWorldMap implements IPositionChangeObserver{
         }
         return res;
     }
+    public double avgChildren(){
+        if(this.animalList.size()==0){
+            return 0;
+        }
+        double counter = 0;
+        for(Animal animal : this.animalList){
+            if(animal.parent1!=null && animal.parent1.isAlive()){
+                counter += 1;
+            }
+            if(animal.parent2!=null && animal.parent2.isAlive()){
+                counter += 1;
+            }
+        }
+        return counter/this.animalList.size();
+    }
 }
