@@ -1,11 +1,11 @@
-# generator_ewolucyjny
-Pierwszy projekt z programowania obiektowego
+# generator_ewolucyjny <br />
+Pierwszy projekt z programowania obiektowego<br />
 
-Jako argument programu należy wpisać ścieżkę: src/main/resources/sampleParameters.csv.
-Zawiera ona przykładowe początkowe parametry.
+Jako argument programu należy wpisać ścieżkę: src/main/resources/sampleParameters.csv. <br />
+Zawiera ona przykładowe początkowe parametry. <br />
 
-Dodatkowe informacje:
--czerwone kropki to najedzone zwierzęta,
--należy podać poprawne dane (autor wierzy w ludzi),
--mode 1 - tryb magiczny,
--wielkość mapy i szybkość odświerzania należy dostosować do komputera
+Dodatkowe informacje: <br />
+-czerwone kropki to najedzone zwierzęta, <br />
+-należy podać poprawne dane (autor wierzy w ludzi), <br />
+-mode 1 - tryb magiczny, <br />
+-wielkość mapy i szybkość odświerzania należy dostosować do komputera <br />
