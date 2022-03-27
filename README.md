@@ -9,3 +9,6 @@ Dodatkowe informacje: <br />
 -należy podać poprawne dane (autor wierzy w ludzi), <br />
 -mode 1 - tryb magiczny, <br />
 -wielkość mapy i szybkość odświerzania należy dostosować do komputera <br />
+
+
+polecenie: https://github.com/apohllo/obiektowe-lab/tree/master/proj1
